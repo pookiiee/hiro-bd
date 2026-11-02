@@ -3,109 +3,271 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Hiro's Ghost Birthday Cafe 👻💚 | مقهى أشباح هيرو</title>
+  <title>كافيه هيرو | Hiro's Cafe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <!-- PeerJS for WebRTC Direct Online Multiplayer -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Ambient Audio Unlock Overlay -->
-  <div id="start-overlay" class="overlay">
-    <div class="start-card">
-      <div class="ghost-badge">👻</div>
-      <h1 class="title-glow">مقهى الأشباح: ميلاد هيرو</h1>
-      <p class="subtitle">Danny Phantom Ghost Zone Cafe</p>
-      <div class="instructions-box">
-        <p>💚 أهلاً بكِ يا <strong>هيرو</strong> في كافيه منطقة الأشباح السري!</p>
-        <p>🎮 للتحكم: أسهم الكيبورد / <strong>WASD</strong> أو أزرار الشاشة للجوال.</p>
-        <p>✨ اضغطي <strong>مسافة (Space)</strong> أو زر التفاعل للحديث والتفاعل مع الأصدقاء والأشياء.</p>
+  <div id="game-app">
+    <!-- Top HUD Bar -->
+    <header id="hud-bar">
+      <div class="hud-left">
+        <div class="hud-box time-box">
+          <span class="hud-label">الوقت</span>
+          <span id="hud-timer" class="hud-val">02:20</span>
+        </div>
+        <div class="hud-box level-box">
+          <span class="hud-star">⭐</span>
+          <span id="hud-level-title" class="hud-val">المرحلة 1</span>
+        </div>
+        <div class="hud-box coins-box">
+          <span class="coin-icon">🪙</span>
+          <span id="hud-coins" class="hud-val">0</span>
+        </div>
       </div>
-      <button id="btn-start" class="glow-btn">دخول الكافيه ⚡ Going Ghost!</button>
-      <div class="no-pink-tag">🚫 100% خالي من اللون البينك • 100% أكتوبلازم داني الشبح 🧪</div>
-    </div>
-  </div>
 
-  <!-- Game Container -->
-  <div id="game-container">
-    <header id="game-ui-header">
-      <div class="ui-pill" id="level-pill">
-        <span class="icon">🎂</span>
-        <span>ميلاد هيرو المميز</span>
+      <div class="hud-center">
+        <div class="target-score">
+          <span>الهدف: </span>
+          <span id="target-count">0 / 4 وجبات</span>
+        </div>
       </div>
-      <div class="quest-tracker" id="quest-tracker">
-        <span class="quest-icon">⚡</span>
-        <span id="quest-text">المهمة: تحدثي مع داني الشبح عند الكاونتر!</span>
-      </div>
-      <div class="ui-controls">
-        <button id="btn-music-toggle" class="icon-btn" title="تشغيل / كتم الصوت">🔊</button>
+
+      <div class="hud-right">
+        <span id="net-status-badge" class="mode-badge">لعب فردي</span>
+        <button id="btn-sound" class="hud-btn" title="كتم/تشغيل الصوت">🔊</button>
+        <button id="btn-pause" class="hud-btn" title="إيقاف مؤقت">⏸️</button>
       </div>
     </header>
 
-    <div class="canvas-wrapper">
+    <!-- Canvas Container -->
+    <div id="canvas-container">
       <canvas id="gameCanvas" width="960" height="540"></canvas>
-
-      <!-- Interactive Prompt Banner -->
-      <div id="interact-bubble" class="interact-bubble hidden">
-        <span class="key-badge">Space</span>
-        <span class="prompt-text">تفاعل</span>
-      </div>
+      <div id="canvas-overlay-ui"></div>
     </div>
 
-    <!-- Dialog Box System -->
-    <div id="dialog-modal" class="dialog-modal hidden">
-      <div class="dialog-box">
-        <div class="dialog-portrait-wrapper">
-          <canvas id="portraitCanvas" width="80" height="80"></canvas>
-          <div id="dialog-speaker-name" class="speaker-name">داني الشبح</div>
+    <!-- Bottom Controls & Hints -->
+    <footer id="hud-footer">
+      <div class="controls-guide">
+        <div class="p1-guide">
+          <span class="player-tag p1">التحكم:</span>
+          <span class="key-hint">WASD / الأسهم</span>
+          <span class="key-hint">Space للتشغيل والأخذ والتقديم</span>
         </div>
-        <div class="dialog-content">
-          <p id="dialog-text" class="dialog-text">مرحباً يا هيرو! جهزنا لك أحلى حفلة في منطقة الأشباح!</p>
-          <div class="dialog-footer">
-            <span class="dialog-hint">اضغط [Space] أو انقر للمتابعة ▾</span>
-          </div>
+        <div class="inventory-badge">
+          <span>بيدك: </span>
+          <span id="hud-inventory-text">فارغة (0/3)</span>
         </div>
       </div>
-    </div>
+      <div class="footer-actions">
+        <button id="btn-how-to-play" class="footer-btn">طريقة اللعب 📖</button>
+        <button id="btn-restart-level" class="footer-btn">إعادة المرحلة 🔄</button>
+        <button id="btn-levels-menu" class="footer-btn">القائمة الرئيسية 📋</button>
+      </div>
+    </footer>
 
-    <!-- Mobile Virtual Controls -->
-    <div id="mobile-controls">
-      <div class="dpad">
-        <button class="dpad-btn up" data-key="ArrowUp">▲</button>
-        <div class="dpad-middle">
-          <button class="dpad-btn left" data-key="ArrowLeft">◀</button>
-          <div class="dpad-center"></div>
-          <button class="dpad-btn right" data-key="ArrowRight">▶</button>
+    <!-- Mobile Touch Controls -->
+    <div id="touch-controls">
+      <div class="touch-dpad">
+        <button class="t-btn up" data-key="ArrowUp">▲</button>
+        <div class="t-dpad-row">
+          <button class="t-btn left" data-key="ArrowLeft">◀</button>
+          <div class="t-center"></div>
+          <button class="t-btn right" data-key="ArrowRight">▶</button>
         </div>
-        <button class="dpad-btn down" data-key="ArrowDown">▼</button>
+        <button class="t-btn down" data-key="ArrowDown">▼</button>
       </div>
-      <div class="action-buttons">
-        <button id="mobile-action-btn" class="action-btn" data-key="Space">
+      <div class="touch-actions">
+        <button class="t-action-btn" data-key="Space">
           <span>⚡</span>
-          <small>تفاعل</small>
+          <span>فعل / خذ</span>
         </button>
       </div>
     </div>
-  </div>
 
-  <!-- Grand Birthday Surprise Modal -->
-  <div id="birthday-celebration-modal" class="overlay hidden">
-    <div class="celebration-card">
-      <div class="portal-rings"></div>
-      <div class="cake-display">
-        <canvas id="bigCakeCanvas" width="120" height="120"></canvas>
+    <!-- 1. HOW TO PLAY / TUTORIAL MODAL (طريقة اللعب) -->
+    <div id="tutorial-modal" class="modal-overlay hidden">
+      <div class="menu-card tutorial-card">
+        <button id="btn-close-tut-x" class="close-x-btn" title="إغلاق">✕</button>
+        <div class="menu-hero-badge">📖 ☕</div>
+        <h2 class="game-main-title" style="font-size: 1.8rem;">طريقة اللعب</h2>
+        <p class="game-sub-title">كل اللي تحتاجين تعرفينه لإدارة الكافيه!</p>
+
+        <div class="tutorial-grid">
+          <div class="tut-step">
+            <div class="tut-icon">🏃‍♀️</div>
+            <div class="tut-info">
+              <h4>1. الحركة</h4>
+              <p>تحركي بأزرار <strong>WASD</strong> أو <strong>الأسهم</strong> على الكيبورد (أو أزرار الشاشة لو تلعبين من الجوال).</p>
+            </div>
+          </div>
+
+          <div class="tut-step">
+            <div class="tut-icon">🍳</div>
+            <div class="tut-info">
+              <h4>2. تشغيل الأجهزة</h4>
+              <p>وقفي عند أي جهاز واضغطي <strong>Space (مسافة)</strong> لتشغيله. حتى لو يدك فيها طلبات، يمديك تشغلين جهاز ثاني بدون مشكلة!</p>
+            </div>
+          </div>
+
+          <div class="tut-step">
+            <div class="tut-icon">📥</div>
+            <div class="tut-info">
+              <h4>3. استلام الطلبات (حتى 3 طلبات بيدك)</h4>
+              <p>لما يخلص الجهاز طبخ، اضغطي <strong>Space</strong> لأخذ الطلب. يمديك تشيلين <strong>لحد 3 طلبات مع بعض بيدك</strong> قبل ما تروحين تسلمينها!</p>
+            </div>
+          </div>
+
+          <div class="tut-step">
+            <div class="tut-icon">🍽️</div>
+            <div class="tut-info">
+              <h4>4. التقديم للزبائن (وجبات مجمعة)</h4>
+              <p>روحي لطاولة الزبون واضغطي <strong>Space</strong> لتسليمه. لو الزبون طالب أكثر من طلب مع بعض، سلميه الطلبات حبة حبة لين تكتمل وجبته وتكسبين الفلوس والإكرامية!</p>
+            </div>
+          </div>
+
+          <div class="tut-step">
+            <div class="tut-icon">🌐</div>
+            <div class="tut-info">
+              <h4>5. اللعب أونلاين مع صاحبتك</h4>
+              <p>أنشئي روم وانسخي الكود وأرسليه لصاحبتك عشان تدخل تلعب معك في نفس الكافيه وتوزعون الشغل بينكم.</p>
+            </div>
+          </div>
+
+          <div class="tut-step">
+            <div class="tut-icon">🗑️</div>
+            <div class="tut-info">
+              <h4>6. سلة الزبالة</h4>
+              <p>لو شلتي طلب زيادة أو بالغلط، وقفي عند سلة الزبالة واضغطي Space لتفريغ يدك فوراً.</p>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-close-tutorial" class="main-cta-btn" style="margin-top: 16px;">فهمت، يالله نبدأ! 🚀</button>
       </div>
-      <h2 class="birthday-title glow-green">🎉 كل عام وأنتِ بألف خير يا هيرو! 🎉</h2>
-      <h3 class="birthday-subtitle">HAPPY BIRTHDAY HIRO!</h3>
-      <div class="birthday-letter">
-        <p>أحلى وأجمل عيد ميلاد لأغلى "هيرو" في العالم! 💚👻</p>
-        <p>نتمنى لكِ سنة مليانة فرح ومغامرات وطاقة أكتوبلازمية خارقة مثل داني الشبح!</p>
-        <p class="ghost-quote">"Going Ghost! ⚡ لا يوجد شيء يمكنه إيقافك أبداً!"</p>
+    </div>
+
+    <!-- 2. MAIN MENU MODAL -->
+    <div id="menu-overlay" class="modal-overlay">
+      <div class="menu-card">
+        <div class="menu-hero-badge">👻 ☕</div>
+        <h1 class="game-main-title">مقهى الأشباح</h1>
+        <p class="game-sub-title">HIRO'S GHOST ZONE CAFE</p>
+        
+        <!-- Game Mode Selection -->
+        <div class="mode-select-box">
+          <h3>اختاري نمط اللعب:</h3>
+          <div class="mode-options">
+            <button class="mode-btn active" data-mode="solo">
+              <span class="mode-icon">👤</span>
+              <span class="mode-name">لعب لوحدي</span>
+              <small>تلعبين بشخصية هيرو لوحدك</small>
+            </button>
+            <button class="mode-btn" data-mode="online">
+              <span class="mode-icon">🌐</span>
+              <span class="mode-name">لعب أونلاين بكود</span>
+              <small>تلعبين مع صاحبتك عن طريق كود الروم</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Online Room Code Sub-Panel -->
+        <div id="online-lobby-panel" class="online-box hidden">
+          <div class="online-tabs">
+            <button id="tab-host" class="online-tab active">إنشاء روم (Host)</button>
+            <button id="tab-join" class="online-tab">دخول بكود (Join)</button>
+          </div>
+
+          <!-- Host View -->
+          <div id="host-view" class="online-subview">
+            <p>كود الروم حقك (أرسليه لصاحبتك عشان تدخل معك):</p>
+            <div class="code-display-box">
+              <span id="my-room-code" class="room-code-text">جاري التجهيز...</span>
+              <button id="btn-copy-code" class="copy-btn">نسخ الكود 📋</button>
+            </div>
+            <div id="host-status" class="online-status">بانتظار دخول صاحبتك... ⏳</div>
+          </div>
+
+          <!-- Join View -->
+          <div id="join-view" class="online-subview hidden">
+            <p>حطي كود الروم اللي أرسلته لك صاحبتك:</p>
+            <div class="code-input-row">
+              <input type="text" id="input-room-code" placeholder="مثال: HIRO-489" maxlength="15">
+              <button id="btn-join-room" class="secondary-btn">دخول الروم ⚡</button>
+            </div>
+            <div id="join-status" class="online-status">اكتبي الكود واضغطي دخول للبدء.</div>
+          </div>
+        </div>
+
+        <!-- Levels Selection -->
+        <div class="levels-list-container">
+          <h3>اختاري المرحلة:</h3>
+          <div class="level-cards-grid" id="levels-grid"></div>
+        </div>
+
+        <div class="menu-action-row">
+          <button id="btn-show-instructions" class="secondary-btn">طريقة اللعب 📖</button>
+          <button id="btn-play-game" class="main-cta-btn">ابدأي اللعب 🚀</button>
+        </div>
       </div>
-      <div class="cake-candles-action">
-        <button id="btn-blow-candles" class="glow-btn">✨ تمني أمنية واطفئي الشموع! ✨</button>
+    </div>
+
+    <!-- LEVEL SUCCESS MODAL -->
+    <div id="level-win-modal" class="modal-overlay hidden">
+      <div class="popup-card win-card">
+        <div class="celebrate-icon">🌟 🪙 🌟</div>
+        <h2 id="win-title">كفو يا هيرو! 🎉</h2>
+        <p id="win-desc">خلصتي كل طلبات المرحلة بنجاح وسرعة!</p>
+        <div class="stats-row">
+          <div class="stat-item">
+            <span>الفلوس اللي جمعتيها:</span>
+            <strong id="win-coins">0</strong>
+          </div>
+          <div class="stat-item">
+            <span>التقييم:</span>
+            <strong id="win-stars">⭐⭐⭐</strong>
+          </div>
+        </div>
+        <div class="popup-buttons">
+          <button id="btn-next-level" class="main-cta-btn">المرحلة اللي بعدها ⏩</button>
+          <button id="btn-menu-back" class="secondary-btn">القائمة الرئيسية</button>
+        </div>
       </div>
-      <button id="btn-continue-party" class="text-btn">العودة للاستمتاع بالكافيه 🎶</button>
+    </div>
+
+    <!-- LEVEL FAILED MODAL -->
+    <div id="level-fail-modal" class="modal-overlay hidden">
+      <div class="popup-card fail-card">
+        <div class="fail-icon">⏰ 👻</div>
+        <h2>خلص الوقت!</h2>
+        <p>الطلبات كثرت والوقت خلص قبل ما تكملين الوجبات.. جربي مرة ثانية!</p>
+        <div class="popup-buttons">
+          <button id="btn-retry-level" class="main-cta-btn">إعادة المحاولة 🔄</button>
+          <button id="btn-menu-back-fail" class="secondary-btn">القائمة الرئيسية</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINAL SPECIAL BIRTHDAY STAGE WIN MODAL -->
+    <div id="birthday-bash-modal" class="modal-overlay hidden">
+      <div class="popup-card birthday-grand-card">
+        <div class="bday-vortex"></div>
+        <div class="cake-banner">🎂 ✨ 👻</div>
+        <h2 class="glow-title">🎉 كل عام وأنتِ بألف خير يا هيرو! 🎉</h2>
+        <h3 class="gold-subtitle">HAPPY BIRTHDAY HIRO!</h3>
+        <div class="birthday-text-box">
+          <p>كفو عليكِ! خلصتي كل مراحل الكافيه بجدارة! 🏆</p>
+          <p>كل سنة وأنتِ بألف صحة وسعادة وهنا يا أغلى "هيرو" في الدنيا، وعقبال 100 سنة حلوة ودايماً مبسوطة ومحققة كل أحلامك! 💚✨</p>
+          <p class="bday-cheer">"Going Ghost! ⚡"</p>
+        </div>
+        <div class="popup-buttons">
+          <button id="btn-replay-all" class="main-cta-btn">العودة للقائمة 🎮</button>
+        </div>
+      </div>
     </div>
   </div>
 
