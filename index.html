@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>كافيه هيرو | Hiro's Cafe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,7 +47,18 @@
     <!-- Canvas Container -->
     <div id="canvas-container">
       <canvas id="gameCanvas" width="960" height="540"></canvas>
-      <div id="canvas-overlay-ui"></div>
+      <div id="canvas-overlay-ui">
+        <!-- Prominent Floating Held Items Inventory Pill -->
+        <div id="floating-inventory-pill" class="floating-inventory-pill">
+          <div class="inv-pill-title">
+            <span class="inv-hand-icon">🤲 بيدك:</span>
+            <span id="inv-capacity-badge" class="inv-cap-badge">(0/3)</span>
+          </div>
+          <div id="floating-items-chips" class="floating-items-chips">
+            <span class="empty-chip">يدك فاضية</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Bottom Controls & Hints -->
@@ -68,6 +79,14 @@
         <button id="btn-restart-level" class="footer-btn">إعادة المرحلة 🔄</button>
         <button id="btn-levels-menu" class="footer-btn">القائمة الرئيسية 📋</button>
       </div>
+      <!-- Party Room HUD Action Bar -->
+      <div id="party-hud-actions" class="party-hud-actions hidden">
+        <button id="btn-party-dance-footer" class="footer-btn dance-btn">💃 ارقصي / Dance</button>
+        <button id="btn-party-candle-footer" class="footer-btn candle-btn">💨 إطفاء الشموع</button>
+        <button id="btn-party-confetti-footer" class="footer-btn confetti-btn">🎉 مفرقعات</button>
+        <button id="btn-party-lights-footer" class="footer-btn lights-btn">💡 الإضاءة</button>
+        <button id="btn-party-leave" class="footer-btn">📋 العودة للكافيه</button>
+      </div>
     </footer>
 
     <!-- Mobile Touch Controls -->
@@ -85,6 +104,10 @@
         <button class="t-action-btn" data-key="Space">
           <span>⚡</span>
           <span>فعل / خذ</span>
+        </button>
+        <button id="btn-touch-dance" class="t-action-btn t-dance-btn hidden" title="ارقصي">
+          <span>💃</span>
+          <span>ارقصي</span>
         </button>
       </div>
     </div>
@@ -126,7 +149,7 @@
             <div class="tut-icon">🍽️</div>
             <div class="tut-info">
               <h4>4. التقديم للزبائن (وجبات مجمعة)</h4>
-              <p>روحي لطاولة الزبون واضغطي <strong>Space</strong> لتسليمه. لو الزبون طالب أكثر من طلب مع بعض، سلميه الطلبات حبة حبة لين تكتمل وجبته وتكسبين الفلوس والإكرامية!</p>
+              <p>روحي لطاولة الزبون واضغطي <strong>Space</strong> لتسليمه. لو الزبون طالب أكثر من طلب مع بعض، سلميه الطلبات حبة حبة لين تكتمل وجبته وتكسبين الفلوس والإكرامية! <strong>(انتبهي: لو سلمتِ طلب غلط، بياخذه وينقص من نقاطك 25 قرش!)</strong></p>
             </div>
           </div>
 
@@ -203,6 +226,25 @@
           </div>
         </div>
 
+        <!-- Player Name Input (Shows under chosen character) -->
+        <div class="player-name-box">
+          <label for="input-player-name">اسمك باللعبة (يظهر تحت شخصيتك بخط صغير):</label>
+          <div class="player-name-row">
+            <span class="player-name-icon">🏷️</span>
+            <input type="text" id="input-player-name" placeholder="اكتبي اسمك (مثال: هيرو، سارة...)" maxlength="12" value="هيرو">
+          </div>
+        </div>
+
+        <!-- 🎭 Character Selection (Roleplay System) -->
+        <div class="char-select-box">
+          <div class="char-select-header">
+            <h3>اختاري شخصيتك:</h3>
+          </div>
+          <div class="char-cards-grid" id="char-cards-grid">
+            <!-- Populated via JS with Danny Phantom characters -->
+          </div>
+        </div>
+
         <!-- Levels Selection -->
         <div class="levels-list-container">
           <h3>اختاري المرحلة:</h3>
@@ -211,7 +253,12 @@
 
         <div class="menu-action-row">
           <button id="btn-show-instructions" class="secondary-btn">طريقة اللعب 📖</button>
+          <button id="btn-menu-party-room" class="secondary-btn party-shortcut-btn locked" title="تفتح فقط بعد إكمال جميع المراحل الـ 4!">🔒 غرفة الاحتفال (مقفلة)</button>
           <button id="btn-play-game" class="main-cta-btn">ابدأي اللعب 🚀</button>
+        </div>
+
+        <div class="menu-sub-row">
+          <button id="btn-open-reset-modal" class="text-link-btn" title="تصفير المراحل وإعادة القفل">تصفير تقدم اللعبة 🔒</button>
         </div>
       </div>
     </div>
@@ -222,6 +269,7 @@
         <div class="celebrate-icon">🌟 🪙 🌟</div>
         <h2 id="win-title">كفو يا هيرو! 🎉</h2>
         <p id="win-desc">خلصتي كل طلبات المرحلة بنجاح وسرعة!</p>
+        <p id="win-next-notice" class="win-unlock-notice hidden">🔓 تم فتح المرحلة التالية بنجاح!</p>
         <div class="stats-row">
           <div class="stat-item">
             <span>الفلوس اللي جمعتيها:</span>
@@ -256,16 +304,37 @@
     <div id="birthday-bash-modal" class="modal-overlay hidden">
       <div class="popup-card birthday-grand-card">
         <div class="bday-vortex"></div>
-        <div class="cake-banner">🎂 ✨ 👻</div>
-        <h2 class="glow-title">🎉 كل عام وأنتِ بألف خير يا هيرو! 🎉</h2>
+        <div class="cake-banner">🎂 ✨ 🎈 🥳</div>
+        <h2 class="glow-title">🎉 خلصتوا جميع المراحل! 🎉</h2>
         <h3 class="gold-subtitle">HAPPY BIRTHDAY HIRO!</h3>
         <div class="birthday-text-box">
-          <p>كفو عليكِ! خلصتي كل مراحل الكافيه بجدارة! 🏆</p>
-          <p>كل سنة وأنتِ بألف صحة وسعادة وهنا يا أغلى "هيرو" في الدنيا، وعقبال 100 سنة حلوة ودايماً مبسوطة ومحققة كل أحلامك! 💚✨</p>
-          <p class="bday-cheer">"Going Ghost! ⚡"</p>
+          <p id="bday-modal-custom-text">كفو عليكم يا بطلات! أبدعتوا وخلصتوا كل مراحل وطلبات الكافيه بجدارة! 🏆</p>
+          <p>الحين حان وقت الاحتفال الأسطوري! جهزنا لكم غرفة حفلة خاصة بهيرو فيها كيكة وشموع وهدايا ورقص ومفاجآت كيوت! 💚✨</p>
+          <p class="bday-cheer">"يلا نروح نحتفل كلنا سوا! 💃🎂"</p>
         </div>
         <div class="popup-buttons">
-          <button id="btn-replay-all" class="main-cta-btn">العودة للقائمة 🎮</button>
+          <button id="btn-enter-party" class="main-cta-btn party-cta-btn">🎂 دخول غرفة الاحتفال والرقص! 💃✨</button>
+          <button id="btn-replay-all" class="secondary-btn">القائمة الرئيسية 📋</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESET PROGRESS PASSWORD MODAL -->
+    <div id="reset-modal" class="modal-overlay hidden">
+      <div class="popup-card reset-card">
+        <button id="btn-close-reset-x" class="close-x-btn" title="إغلاق">✕</button>
+        <div class="reset-icon">🔒 ⚠️</div>
+        <h2 style="font-size: 1.6rem; margin-bottom: 6px;">إعادة ضبط اللعبة</h2>
+        <p style="font-size: 0.95rem; color: #d0dbe5; margin-bottom: 14px;">لتصفير اللعبة وإعادة قفل جميع المراحل من البداية، يرجى كتابة كلمة المرور:</p>
+        
+        <div class="reset-input-row">
+          <input type="password" id="input-reset-pass" placeholder="أدخلي كلمة المرور..." maxlength="20">
+        </div>
+        <div id="reset-pass-error" class="reset-error hidden">❌ كلمة المرور غير صحيحة!</div>
+
+        <div class="popup-buttons" style="margin-top: 14px;">
+          <button id="btn-confirm-reset" class="main-cta-btn danger-cta">تأكيد التصفير 🔄</button>
+          <button id="btn-cancel-reset" class="secondary-btn">إلغاء</button>
         </div>
       </div>
     </div>

@@ -102,6 +102,43 @@ class SoundManager {
     this.playTone(330, 'square', 0.15, 0.16, 0.2);
   }
 
+  // Sound Effect: Cute kitten meow (each cat has unique pitch!)
+  playMeow(pitchMultiplier = 1.0) {
+    if (!this.ctx || this.isMuted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    // Kitten meow frequency glide: rises from ~540Hz to ~840Hz, then softens to ~580Hz
+    const baseFreq = 540 * pitchMultiplier;
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.linearRampToValueAtTime(baseFreq * 1.55, now + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.95, now + 0.38);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1150 * pitchMultiplier, now);
+    filter.Q.setValueAtTime(2.2, now);
+
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.24, now + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.45);
+
+    // Cute soft purr chimes following
+    setTimeout(() => {
+      this.playTone(420 * pitchMultiplier, 'sine', 0.1, 0, 0.14);
+      this.playTone(630 * pitchMultiplier, 'sine', 0.12, 0.07, 0.16);
+    }, 280);
+  }
+
   // Sound Effect: Birthday Candles blow
   playCandlesBlow() {
     if (!this.ctx || this.isMuted) return;
@@ -207,6 +244,38 @@ class SoundManager {
       this.playTone(n.f, 'square', 0.22, n.t, 0.25);
       this.playTone(n.f / 2, 'triangle', 0.22, n.t, 0.2);
     });
+  }
+
+  // Upbeat 8-bit Happy Birthday + Disco Dance Loop for the Party Celebration Room
+  startPartyBGM() {
+    this.stopBGM();
+    if (!this.ctx) return;
+    this.bgmPlaying = true;
+
+    const C4 = 261.6, D4 = 293.7, E4 = 329.6, F4 = 349.2, G4 = 392.0, A4 = 440.0, Bb4 = 466.2, C5 = 523.3;
+    const partyMelody = [
+      { f: C4, d: 0.2 }, { f: C4, d: 0.15 }, { f: D4, d: 0.35 }, { f: C4, d: 0.35 }, { f: F4, d: 0.35 }, { f: E4, d: 0.55 },
+      { f: C4, d: 0.2 }, { f: C4, d: 0.15 }, { f: D4, d: 0.35 }, { f: C4, d: 0.35 }, { f: G4, d: 0.35 }, { f: F4, d: 0.55 },
+      { f: C4, d: 0.2 }, { f: C4, d: 0.15 }, { f: C5, d: 0.35 }, { f: A4, d: 0.35 }, { f: F4, d: 0.35 }, { f: E4, d: 0.35 }, { f: D4, d: 0.45 },
+      { f: Bb4, d: 0.2 }, { f: Bb4, d: 0.15 }, { f: A4, d: 0.35 }, { f: F4, d: 0.35 }, { f: G4, d: 0.35 }, { f: F4, d: 0.65 }
+    ];
+
+    let pStep = 0;
+    const playPartyNext = () => {
+      if (!this.bgmPlaying) return;
+      const n = partyMelody[pStep % partyMelody.length];
+      if (n.f > 0) {
+        this.playTone(n.f, 'square', n.d * 0.85, 0, 0.16);
+        this.playTone(n.f / 2, 'triangle', n.d * 0.9, 0, 0.2);
+        if (pStep % 2 === 0) {
+          this.playTone(880, 'sine', 0.05, 0, 0.06);
+        }
+      }
+      pStep++;
+      this.bgmTimer = setTimeout(playPartyNext, n.d * 1000 * 0.92);
+    };
+
+    playPartyNext();
   }
 }
 
