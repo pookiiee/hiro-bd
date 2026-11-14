@@ -39,6 +39,7 @@
 
       <div class="hud-right">
         <span id="net-status-badge" class="mode-badge">لعب فردي</span>
+        <button id="btn-toggle-rotate" class="hud-btn rotate-btn" title="تكبير الشاشة بالعرض">⛶</button>
         <button id="btn-sound" class="hud-btn" title="كتم/تشغيل الصوت">🔊</button>
         <button id="btn-pause" class="hud-btn" title="إيقاف مؤقت">⏸️</button>
       </div>
@@ -92,8 +93,7 @@
     <!-- Mobile Touch Controls Deck -->
     <div id="touch-controls">
       <div id="mobile-rotate-banner" class="mobile-rotate-banner">
-        <span class="rotate-icon">🔄</span>
-        <span class="rotate-text">دوّري الشاشة بالعرض لتجربة أوسع وتحكم أسهل!</span>
+        <button id="btn-quick-rotate" class="rotate-cta-btn">⛶ تكبير الشاشة بالعرض (وضع ملء الشاشة)</button>
         <button id="btn-dismiss-rotate" class="rotate-dismiss-btn" title="إخفاء">✕</button>
       </div>
 
@@ -109,14 +109,14 @@
           </button>
         </div>
 
-        <div class="touch-dpad">
-          <button class="t-btn up" data-key="ArrowUp">▲</button>
-          <div class="t-dpad-row">
-            <button class="t-btn left" data-key="ArrowLeft">◀</button>
+        <div class="touch-dpad" dir="ltr" style="direction: ltr !important;">
+          <button class="t-btn up" data-key="ArrowUp" aria-label="أعلى">▲</button>
+          <div class="t-dpad-row" dir="ltr" style="direction: ltr !important;">
+            <button class="t-btn left" data-key="ArrowLeft" aria-label="يسار">◀</button>
             <div class="t-center"></div>
-            <button class="t-btn right" data-key="ArrowRight">▶</button>
+            <button class="t-btn right" data-key="ArrowRight" aria-label="يمين">▶</button>
           </div>
-          <button class="t-btn down" data-key="ArrowDown">▼</button>
+          <button class="t-btn down" data-key="ArrowDown" aria-label="أسفل">▼</button>
         </div>
       </div>
     </div>

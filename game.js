@@ -455,17 +455,27 @@ function initTouchControls() {
   const dpadBtns = document.querySelectorAll('.t-btn');
   dpadBtns.forEach(btn => {
     const k = btn.getAttribute('data-key');
-    const start = (e) => { e.preventDefault(); keys[k] = true; };
-    const end = (e) => { e.preventDefault(); keys[k] = false; };
-    btn.addEventListener('touchstart', start, { passive: false });
-    btn.addEventListener('touchend', end);
-    btn.addEventListener('mousedown', start);
-    btn.addEventListener('mouseup', end);
+    const press = (e) => {
+      e.preventDefault();
+      keys[k] = true;
+      btn.classList.add('pressed');
+    };
+    const release = (e) => {
+      e.preventDefault();
+      keys[k] = false;
+      btn.classList.remove('pressed');
+    };
+    btn.addEventListener('touchstart', press, { passive: false });
+    btn.addEventListener('touchend', release);
+    btn.addEventListener('touchcancel', release);
+    btn.addEventListener('mousedown', press);
+    btn.addEventListener('mouseup', release);
+    btn.addEventListener('mouseleave', release);
   });
 
-  const actBtn = document.querySelector('.t-action-btn');
+  const actBtn = document.querySelector('.t-action-btn[data-key="Space"]');
   if (actBtn) {
-    actBtn.addEventListener('click', (e) => {
+    const triggerAction = (e) => {
       e.preventDefault();
       if (state.levelRunning && !state.isPaused) {
         const activeLocalPlayer = (state.mode === 'online' && !state.isHost) ? state.p2 : state.p1;
@@ -474,7 +484,9 @@ function initTouchControls() {
           Net.send({ type: 'ACTION' });
         }
       }
-    });
+    };
+    actBtn.addEventListener('touchstart', triggerAction, { passive: false });
+    actBtn.addEventListener('click', triggerAction);
   }
 }
 
@@ -1414,6 +1426,34 @@ function setupUI() {
       }
     });
   }
+
+  // Fullscreen / Rotate Toggle (Bypasses phone orientation locks)
+  const toggleRotate = () => {
+    document.body.classList.toggle('force-landscape-mode');
+    const isRot = document.body.classList.contains('force-landscape-mode');
+    const btnHud = document.getElementById('btn-toggle-rotate');
+    const btnQuick = document.getElementById('btn-quick-rotate');
+    if (btnHud) btnHud.innerText = isRot ? '📱' : '⛶';
+    if (btnQuick) btnQuick.innerText = isRot ? '📱 العودة للوضع العادي' : '⛶ تكبير الشاشة بالعرض (وضع ملء الشاشة)';
+
+    if (isRot) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      showNotice('⛶ تم تكبير الشاشة بالعرض! أمسكي الجوال بالعرض لتجربة ضخمة وواضحة! 🎮');
+    } else {
+      if (document.exitFullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+      showNotice('📱 تم الرجوع للوضع الرأسي');
+    }
+  };
+
+  const btnHudRotate = document.getElementById('btn-toggle-rotate');
+  if (btnHudRotate) btnHudRotate.addEventListener('click', toggleRotate);
+
+  const btnQuickRotate = document.getElementById('btn-quick-rotate');
+  if (btnQuickRotate) btnQuickRotate.addEventListener('click', toggleRotate);
 
   // Dismiss rotate banner button
   const btnDismissRotate = document.getElementById('btn-dismiss-rotate');

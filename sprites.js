@@ -139,18 +139,18 @@ const Sprites = {
     const textLabel = heldItems.map(i => itemNamesArabic[i] || i).join(' + ');
 
     ctx.fillStyle = 'rgba(6, 3, 14, 0.96)';
-    const badgeW = Math.max(52, textLabel.length * 8 + 18);
+    const badgeW = Math.max(56, textLabel.length * 9 + 20);
     ctx.beginPath();
-    ctx.roundRect(-badgeW / 2, yOffset - 33, badgeW, 15, 5);
+    ctx.roundRect(-badgeW / 2, yOffset - 35, badgeW, 17, 5);
     ctx.fill();
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 1.2;
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 9px Tajawal, sans-serif';
+    ctx.font = 'bold 11px Tajawal, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(textLabel, 0, yOffset - 22);
+    ctx.fillText(textLabel, 0, yOffset - 23);
   },
 
   // 2. UNIFIED PLAYABLE CHARACTER RENDERER (Danny Phantom Universe Only)
@@ -191,20 +191,20 @@ const Sprites = {
     const displayName = tagText || (isOnlineFriend ? `${charNames[charId] || charId} 🟢` : charNames[charId] || charId);
 
     if (displayName) {
-      // Put name UNDERNEATH the character in small, neat font per user request!
-      const textW = Math.max(30, displayName.length * 6.2 + 8);
-      ctx.fillStyle = 'rgba(6, 3, 14, 0.85)';
+      // Put name UNDERNEATH the character in clear, readable font
+      const textW = Math.max(34, displayName.length * 7.5 + 10);
+      ctx.fillStyle = 'rgba(6, 3, 14, 0.9)';
       ctx.beginPath();
-      ctx.roundRect(-textW / 2, 21, textW, 12, 3);
+      ctx.roundRect(-textW / 2, 21, textW, 15, 4);
       ctx.fill();
       ctx.strokeStyle = isOnlineFriend ? '#00e5ff' : '#00ff88';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.2;
       ctx.stroke();
 
       ctx.fillStyle = isOnlineFriend ? '#00e5ff' : '#ffffff';
-      ctx.font = 'bold 8px Tajawal, sans-serif';
+      ctx.font = 'bold 10.5px Tajawal, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(displayName, 0, 30);
+      ctx.fillText(displayName, 0, 32.5);
     }
 
     // Ghost Auras
@@ -559,15 +559,15 @@ const Sprites = {
     ctx.save();
     ctx.translate(x, y);
 
-    const r = isMini ? 11 : 14;
-    const s = isMini ? 0.75 : 1;
+    const r = isMini ? 14 : 17;
+    const s = isMini ? 0.95 : 1.25;
 
     ctx.fillStyle = 'rgba(10, 5, 22, 0.9)';
     ctx.beginPath();
     ctx.arc(0, 0, r, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = this.colors.ectoGreen;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.8;
     ctx.stroke();
 
     ctx.scale(s, s);
@@ -798,15 +798,16 @@ const Sprites = {
   // 7. MULTI-ITEM COMBO BUBBLE WITH PATIENCE METER
   drawComboOrderBubble(ctx, x, y, orderItems, deliveredItems = [], patiencePct = 1) {
     ctx.save();
-    ctx.translate(x, y - 52);
+    ctx.translate(x, y - 56);
 
     const count = orderItems.length;
-    const bubbleWidth = Math.max(34, count * 28 + 12);
-    const bubbleHeight = 32;
+    const spacing = 34;
+    const bubbleWidth = Math.max(46, count * spacing + 18);
+    const bubbleHeight = 42;
 
-    ctx.fillStyle = 'rgba(10, 5, 20, 0.9)';
+    ctx.fillStyle = 'rgba(8, 4, 18, 0.94)';
     ctx.beginPath();
-    ctx.roundRect(-bubbleWidth / 2, -bubbleHeight / 2, bubbleWidth, bubbleHeight, 10);
+    ctx.roundRect(-bubbleWidth / 2, -bubbleHeight / 2, bubbleWidth, bubbleHeight, 12);
     ctx.fill();
 
     let timerColor = this.colors.ectoGreen;
@@ -814,34 +815,35 @@ const Sprites = {
     else if (patiencePct < 0.6) timerColor = '#ffcc00';
 
     ctx.strokeStyle = timerColor;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
     ctx.stroke();
 
-    ctx.fillStyle = 'rgba(10, 5, 20, 0.9)';
+    ctx.fillStyle = 'rgba(8, 4, 18, 0.94)';
     ctx.beginPath();
-    ctx.moveTo(-5, bubbleHeight / 2);
-    ctx.lineTo(0, bubbleHeight / 2 + 7);
-    ctx.lineTo(5, bubbleHeight / 2);
+    ctx.moveTo(-6, bubbleHeight / 2);
+    ctx.lineTo(0, bubbleHeight / 2 + 8);
+    ctx.lineTo(6, bubbleHeight / 2);
     ctx.closePath();
     ctx.fill();
 
-    const startX = -((count - 1) * 26) / 2;
+    const startX = -((count - 1) * spacing) / 2;
     orderItems.forEach((item, idx) => {
-      const ix = startX + idx * 26;
+      const ix = startX + idx * spacing;
       const isDelivered = deliveredItems.includes(item);
 
       if (isDelivered) {
-        ctx.fillStyle = 'rgba(0, 255, 136, 0.25)';
+        ctx.fillStyle = 'rgba(0, 255, 136, 0.3)';
         ctx.beginPath();
-        ctx.arc(ix, 0, 11, 0, Math.PI * 2);
+        ctx.arc(ix, 0, 14, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = this.colors.ectoGreen;
+        ctx.lineWidth = 2;
         ctx.stroke();
 
         ctx.fillStyle = this.colors.ectoGreenBright;
-        ctx.font = 'bold 12px Arial';
+        ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('✓', ix, 4);
+        ctx.fillText('✓', ix, 5);
       } else {
         this.drawItem(ctx, ix, 0, item, true);
       }

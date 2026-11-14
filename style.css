@@ -1085,26 +1085,36 @@ html, body {
   background: rgba(18, 9, 36, 0.94);
   border: 1px solid #3d206c;
   border-radius: 10px;
-  padding: 6px 12px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--ghost-cyan);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  padding: 6px 10px;
   margin-bottom: 8px;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   pointer-events: auto;
 }
 
-.mobile-rotate-banner .rotate-icon {
-  font-size: 0.95rem;
-  animation: rotateIcon 4s linear infinite;
+.rotate-cta-btn {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.2) 0%, rgba(0, 255, 136, 0.2) 100%);
+  border: 1.5px solid var(--ghost-cyan);
+  color: var(--ghost-cyan);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+  transition: all 0.2s;
 }
 
-@keyframes rotateIcon {
-  0% { transform: rotate(0deg); }
-  50% { transform: rotate(180deg); }
-  100% { transform: rotate(360deg); }
+.rotate-cta-btn:hover, .rotate-cta-btn:active {
+  background: rgba(0, 229, 255, 0.35);
+  box-shadow: 0 0 15px var(--ghost-cyan);
+  transform: scale(0.98);
 }
 
 .rotate-dismiss-btn {
@@ -1113,7 +1123,7 @@ html, body {
   color: #8877aa;
   font-size: 0.85rem;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 4px 8px;
 }
 
 .rotate-dismiss-btn:hover {
@@ -1125,15 +1135,25 @@ html, body {
   touch-action: none;
 }
 
+/* STRICT LTR DIRECTION FOR TOUCH DPAD: Left is ALWAYS Left, Right is ALWAYS Right! */
 .touch-dpad {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  opacity: 0.92;
+  direction: ltr !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  opacity: 0.94;
 }
 
 .t-dpad-row {
-  display: flex;
+  direction: ltr !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
 .t-center {
@@ -1471,7 +1491,7 @@ html, body {
     flex: 0 0 auto !important;
     width: 100% !important;
     aspect-ratio: 16 / 9 !important;
-    max-height: 40vh !important;
+    max-height: 48vh !important;
     background: #090514;
     border-bottom: 2px solid #2e1850;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 12px rgba(0, 255, 136, 0.12);
@@ -1635,4 +1655,112 @@ html, body {
   #hud-footer {
     display: none !important;
   }
+}
+
+/* ========================================================
+   FORCE IN-GAME ROTATED LANDSCAPE (Bypasses iOS/Android Orientation Lock!)
+   ======================================================== */
+body.force-landscape-mode {
+  width: 100vw !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: #000 !important;
+}
+
+body.force-landscape-mode #game-app {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 100vh !important;
+  height: 100vw !important;
+  max-width: 100vh !important;
+  max-height: 100vw !important;
+  transform: translate(-50%, -50%) rotate(90deg) !important;
+  transform-origin: center center !important;
+  z-index: 999999 !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body.force-landscape-mode #hud-bar {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 32px !important;
+  background: rgba(9, 4, 20, 0.9) !important;
+  z-index: 50 !important;
+}
+
+body.force-landscape-mode #canvas-container {
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1 !important;
+  aspect-ratio: auto !important;
+  max-height: none !important;
+  background: #000 !important;
+}
+
+body.force-landscape-mode #gameCanvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+body.force-landscape-mode #touch-controls {
+  position: absolute !important;
+  bottom: 10px !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  padding: 0 24px !important;
+  background: transparent !important;
+  border: none !important;
+  pointer-events: none !important;
+  z-index: 60 !important;
+  flex-direction: row !important;
+}
+
+body.force-landscape-mode .touch-controls-row {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+}
+
+body.force-landscape-mode .touch-dpad,
+body.force-landscape-mode .touch-actions {
+  pointer-events: auto !important;
+  opacity: 0.88 !important;
+}
+
+body.force-landscape-mode .t-btn {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+body.force-landscape-mode .t-center {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+body.force-landscape-mode .t-action-btn {
+  width: 70px !important;
+  height: 70px !important;
+}
+
+body.force-landscape-mode .t-dance-btn {
+  width: 58px !important;
+  height: 58px !important;
+}
+
+body.force-landscape-mode #mobile-rotate-banner {
+  display: none !important;
+}
+
+body.force-landscape-mode #hud-footer {
+  display: none !important;
 }
