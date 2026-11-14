@@ -89,26 +89,35 @@
       </div>
     </footer>
 
-    <!-- Mobile Touch Controls -->
+    <!-- Mobile Touch Controls Deck -->
     <div id="touch-controls">
-      <div class="touch-dpad">
-        <button class="t-btn up" data-key="ArrowUp">▲</button>
-        <div class="t-dpad-row">
-          <button class="t-btn left" data-key="ArrowLeft">◀</button>
-          <div class="t-center"></div>
-          <button class="t-btn right" data-key="ArrowRight">▶</button>
-        </div>
-        <button class="t-btn down" data-key="ArrowDown">▼</button>
+      <div id="mobile-rotate-banner" class="mobile-rotate-banner">
+        <span class="rotate-icon">🔄</span>
+        <span class="rotate-text">دوّري الشاشة بالعرض لتجربة أوسع وتحكم أسهل!</span>
+        <button id="btn-dismiss-rotate" class="rotate-dismiss-btn" title="إخفاء">✕</button>
       </div>
-      <div class="touch-actions">
-        <button class="t-action-btn" data-key="Space">
-          <span>⚡</span>
-          <span>فعل / خذ</span>
-        </button>
-        <button id="btn-touch-dance" class="t-action-btn t-dance-btn hidden" title="ارقصي">
-          <span>💃</span>
-          <span>ارقصي</span>
-        </button>
+
+      <div class="touch-controls-row">
+        <div class="touch-actions">
+          <button class="t-action-btn" data-key="Space">
+            <span class="t-action-icon">⚡</span>
+            <span class="t-action-label">فعل / خذ</span>
+          </button>
+          <button id="btn-touch-dance" class="t-action-btn t-dance-btn hidden" title="ارقصي">
+            <span class="t-action-icon">💃</span>
+            <span class="t-action-label">ارقصي</span>
+          </button>
+        </div>
+
+        <div class="touch-dpad">
+          <button class="t-btn up" data-key="ArrowUp">▲</button>
+          <div class="t-dpad-row">
+            <button class="t-btn left" data-key="ArrowLeft">◀</button>
+            <div class="t-center"></div>
+            <button class="t-btn right" data-key="ArrowRight">▶</button>
+          </div>
+          <button class="t-btn down" data-key="ArrowDown">▼</button>
+        </div>
       </div>
     </div>
 

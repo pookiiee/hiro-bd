@@ -112,7 +112,9 @@ const state = {
   coins: 0,
   servedCount: 0,
 
-  // Player 1 (Local Player: Default name can be customized)
+  localPlayerName: localStorage.getItem('hiro_player_name') || 'هيرو',
+
+  // Player 1 (Host / Solo Player)
   p1: {
     name: localStorage.getItem('hiro_player_name') || 'هيرو',
     charId: 'danny',
@@ -126,9 +128,9 @@ const state = {
     heldItems: [] // Capacity up to 3 items!
   },
 
-  // Player 2 (Online Partner: Default Sam Manson)
+  // Player 2 (Online Guest / Partner)
   p2: {
-    name: 'صديقة هيرو',
+    name: 'لاعب 2',
     charId: 'sam',
     x: 540,
     y: 200,
@@ -249,6 +251,8 @@ const Net = {
       this.peer.on('connection', (c) => {
         this.conn = c;
         state.isHost = true;
+        state.p1.name = state.localPlayerName;
+        if (state.selectedCharId) state.p1.charId = state.selectedCharId;
         this.setupConnection();
       });
 
@@ -273,9 +277,14 @@ const Net = {
     try {
       this.conn = this.peer.connect(targetPeerId);
       state.isHost = false;
+      state.p2.name = state.localPlayerName;
+      if (state.selectedCharId) state.p2.charId = state.selectedCharId;
 
       this.conn.on('open', () => {
         statusElem.innerText = 'تم الدخول بنجاح! 🟢 مرحباً بكِ في الكافيه!';
+        state.isHost = false;
+        state.p2.name = state.localPlayerName;
+        if (state.selectedCharId) state.p2.charId = state.selectedCharId;
         this.setupConnection();
       });
 
@@ -305,11 +314,19 @@ const Net = {
       this.handleIncomingData(data);
     });
 
-    // Send custom player name immediately upon connection
-    const myName = (state.isHost ? state.p1.name : state.p2.name) || 'هيرو';
-    setTimeout(() => {
-      this.send({ type: 'NAME_CHANGE', name: myName });
-    }, 300);
+    // Send custom player name and character immediately upon connection
+    const sendIntro = () => {
+      const myLocalP = (state.mode === 'online' && !state.isHost) ? state.p2 : state.p1;
+      myLocalP.name = state.localPlayerName;
+      this.send({
+        type: 'PLAYER_INTRO',
+        name: state.localPlayerName,
+        charId: myLocalP.charId
+      });
+    };
+    sendIntro();
+    setTimeout(sendIntro, 350);
+    setTimeout(sendIntro, 1000);
 
     this.conn.on('close', () => {
       state.onlineConnected = false;
@@ -336,12 +353,23 @@ const Net = {
       if (data.charId) targetP.charId = data.charId;
       if (data.name) targetP.name = data.name;
       if (typeof data.dancing !== 'undefined') targetP.dancing = data.dancing;
-    } else if (data.type === 'NAME_CHANGE') {
+    } else if (data.type === 'PLAYER_INTRO' || data.type === 'NAME_CHANGE') {
       const targetP = state.isHost ? state.p2 : state.p1;
-      targetP.name = data.name || (state.isHost ? 'صديقة هيرو' : 'هيرو');
+      if (data.name) targetP.name = data.name;
+      if (data.charId) targetP.charId = data.charId;
+      if (!data.isReply) {
+        const myLocalP = (state.mode === 'online' && !state.isHost) ? state.p2 : state.p1;
+        this.send({
+          type: 'PLAYER_INTRO',
+          name: state.localPlayerName,
+          charId: myLocalP.charId,
+          isReply: true
+        });
+      }
     } else if (data.type === 'CHAR_CHANGE') {
       const targetP = state.isHost ? state.p2 : state.p1;
-      targetP.charId = data.charId;
+      if (data.charId) targetP.charId = data.charId;
+      if (data.name) targetP.name = data.name;
     } else if (data.type === 'ACTION') {
       const remotePlayer = state.isHost ? state.p2 : state.p1;
       handlePlayerAction(remotePlayer);
@@ -494,7 +522,8 @@ function updatePlayers() {
       moving: activePlayer.moving,
       dancing: activePlayer.dancing,
       heldItems: activePlayer.heldItems,
-      charId: activePlayer.charId
+      charId: activePlayer.charId,
+      name: activePlayer.name
     });
   }
 }
@@ -1275,13 +1304,16 @@ function setupCharacterSelect() {
     card.addEventListener('click', () => {
       document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
+      state.selectedCharId = char.id;
       state.p1.charId = char.id;
-      state.p1.name = char.name;
+      if (state.mode === 'online' && !state.isHost) {
+        state.p2.charId = char.id;
+      }
 
       sounds.playInteract();
 
       if (state.mode === 'online' && Net.conn) {
-        Net.send({ type: 'CHAR_CHANGE', charId: char.id });
+        Net.send({ type: 'CHAR_CHANGE', charId: char.id, name: state.localPlayerName });
       }
     });
 
@@ -1365,14 +1397,30 @@ function setupUI() {
   // Player Name Input Setup (Appears under chosen character)
   const nameInput = document.getElementById('input-player-name');
   if (nameInput) {
-    nameInput.value = state.p1.name;
+    nameInput.value = state.localPlayerName;
     nameInput.addEventListener('input', (e) => {
-      const val = e.target.value.trim() || 'هيرو';
-      state.p1.name = val;
+      const val = e.target.value.trim() || 'لاعب';
+      state.localPlayerName = val;
       localStorage.setItem('hiro_player_name', val);
+
+      if (state.mode === 'online' && !state.isHost) {
+        state.p2.name = val;
+      } else {
+        state.p1.name = val;
+      }
+
       if (state.mode === 'online' && Net.conn) {
         Net.send({ type: 'NAME_CHANGE', name: val });
       }
+    });
+  }
+
+  // Dismiss rotate banner button
+  const btnDismissRotate = document.getElementById('btn-dismiss-rotate');
+  const rotateBanner = document.getElementById('mobile-rotate-banner');
+  if (btnDismissRotate && rotateBanner) {
+    btnDismissRotate.addEventListener('click', () => {
+      rotateBanner.classList.add('hidden');
     });
   }
 
