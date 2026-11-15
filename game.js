@@ -216,12 +216,13 @@ const partyState = {
   djBooth: { x: 840, y: 430 }
 };
 
-// PeerJS Online Multiplayer Manager (Supports up to 6 players simultaneously!)
+// PeerJS Online Multiplayer Manager (Fixed: Accurate Slots, Unique Names, Fast Connect)
 const Net = {
   peer: null,
   conn: null,       // Guest connection to Host
   conns: {},        // Host map: peerId -> DataConnection (supports up to 5 guests)
   myCode: '',
+  connectTimeout: null,
 
   init(forceNewCode = false) {
     if (typeof Peer === 'undefined') {
@@ -265,17 +266,21 @@ const Net = {
         state.isHost = true;
         state.mySlot = 1;
         state.players[0].name = state.localPlayerName;
+        state.players[0].connected = true;
         if (state.selectedCharId) state.players[0].charId = state.selectedCharId;
 
-        c.on('open', () => {
+        const onHostConnOpen = () => {
+          // Check if room is full (max 6: 1 host + 5 guests)
           const activeConns = Object.values(Net.conns).filter(conn => conn && conn.open);
           if (activeConns.length >= 5) {
-            c.send({ type: 'ROOM_FULL', message: 'الغرفة ممتلئة بالكامل (الحد الأقصى 6 لاعبات).' });
-            setTimeout(() => c.close(), 600);
+            try {
+              c.send({ type: 'ROOM_FULL', message: 'الغرفة ممتلئة بالكامل (الحد الأقصى 6 لاعبات).' });
+              setTimeout(() => c.close(), 500);
+            } catch (e) {}
             return;
           }
 
-          // Find first unoccupied slot between 2 and 6
+          // Assign free slot 2..6
           let assignedSlot = -1;
           for (let s = 1; s < 6; s++) {
             if (!state.players[s].connected) {
@@ -291,22 +296,24 @@ const Net = {
           state.onlineConnected = true;
           state.mode = 'online';
 
-          // 1. Send slot assignment & current game state to new guest
-          c.send({
-            type: 'ASSIGN_SLOT',
-            slot: assignedSlot,
-            players: state.players.map(p => ({
-              id: p.id,
-              name: p.name,
-              charId: p.charId,
-              connected: p.connected,
-              x: p.x,
-              y: p.y
-            })),
-            scene: state.scene,
-            levelRunning: state.levelRunning,
-            currentLevelIndex: state.currentLevelIndex
-          });
+          // 1. Send slot assignment & existing room state to new guest
+          try {
+            c.send({
+              type: 'ASSIGN_SLOT',
+              slot: assignedSlot,
+              players: state.players.map(p => ({
+                id: p.id,
+                name: p.name,
+                charId: p.charId,
+                connected: p.connected,
+                x: p.x,
+                y: p.y
+              })),
+              scene: state.scene,
+              levelRunning: state.levelRunning,
+              currentLevelIndex: state.currentLevelIndex
+            });
+          } catch(e) {}
 
           // 2. Broadcast to other existing guests that a new player joined
           Net.broadcast({
@@ -338,17 +345,25 @@ const Net = {
           const totalInRoom = Object.values(Net.conns).filter(conn => conn && conn.open).length + 1;
           showNotice(`انضمت صديقة جديدة للغرفة! (${totalInRoom}/6)`);
 
-          // If Host is ALREADY playing, immediately launch the new guest directly into the game!
+          // If Host is ALREADY playing, immediately launch guest directly into game!
           if (state.levelRunning) {
             setTimeout(() => {
-              if (state.scene === 'party') {
-                c.send({ type: 'ENTER_PARTY_ROOM' });
-              } else {
-                c.send({ type: 'START_LEVEL', levelIndex: state.currentLevelIndex });
-              }
+              try {
+                if (state.scene === 'party') {
+                  c.send({ type: 'ENTER_PARTY_ROOM' });
+                } else {
+                  c.send({ type: 'START_LEVEL', levelIndex: state.currentLevelIndex });
+                }
+              } catch(e) {}
             }, 300);
           }
-        });
+        };
+
+        if (c.open) {
+          onHostConnOpen();
+        } else {
+          c.on('open', onHostConnOpen);
+        }
       });
 
       this.peer.on('error', (err) => {
@@ -363,10 +378,6 @@ const Net = {
   },
 
   connectTo(targetCode) {
-    if (!this.peer) {
-      showNotice('خدمة الأونلاين غير متاحة حالياً بدون اتصال إنترنت.');
-      return;
-    }
     let raw = (targetCode || '').trim().toUpperCase();
     if (!raw) {
       showNotice('يرجى كتابة رمز الغرفة أولاً للانضمام.');
@@ -379,18 +390,38 @@ const Net = {
     }
     const targetPeerId = `ghost-cafe-${raw.toLowerCase()}`;
     const statusElem = document.getElementById('join-status');
+    const btnJoin = document.getElementById('btn-join-room');
     if (statusElem) statusElem.innerText = `جاري الاتصال بالغرفة (${raw})...`;
+    if (btnJoin) btnJoin.innerText = 'جاري الاتصال...';
+
+    // Ensure our own peer is initialized and open before connecting
+    if (!this.peer || this.peer.disconnected || !this.peer.open) {
+      this.init();
+      setTimeout(() => this.connectTo(targetCode), 700);
+      return;
+    }
 
     try {
       if (this.conn && this.conn.open) {
         try { this.conn.close(); } catch(e) {}
       }
 
+      clearTimeout(this.connectTimeout);
+      this.connectTimeout = setTimeout(() => {
+        if (!state.onlineConnected) {
+          if (statusElem) statusElem.innerText = `تعذر الاتصال بالمضيفة (${raw})! تأكدي أن صاحبة الغرفة فاتحة اللعبة، وأن الرمز صحيح.`;
+          if (btnJoin) btnJoin.innerText = 'دخول الغرفة';
+          showNotice(`تعذر الاتصال بالغرفة (${raw})! تأكدي من صحة الرمز.`);
+        }
+      }, 9000);
+
       this.conn = this.peer.connect(targetPeerId, { reliable: true });
       state.isHost = false;
 
-      this.conn.on('open', () => {
+      const onGuestConnOpen = () => {
+        clearTimeout(Net.connectTimeout);
         if (statusElem) statusElem.innerText = `تم الانضمام بنجاح إلى الغرفة (${raw})!`;
+        if (btnJoin) btnJoin.innerText = 'دخول الغرفة';
         state.onlineConnected = true;
         state.isHost = false;
 
@@ -400,14 +431,24 @@ const Net = {
         sounds.playCelebrationFanfare();
         showNotice(`تم الانضمام بنجاح للغرفة (${raw})! بانتظار المضيفة لبدء اللعبة`);
         this.setupConnection();
-      });
+      };
+
+      if (this.conn.open) {
+        onGuestConnOpen();
+      } else {
+        this.conn.on('open', onGuestConnOpen);
+      }
 
       this.conn.on('error', (err) => {
+        clearTimeout(Net.connectTimeout);
         if (statusElem) statusElem.innerText = 'تعذر الاتصال! تأكدي من صحة رمز الغرفة وأن المضيفة متصلة.';
+        if (btnJoin) btnJoin.innerText = 'دخول الغرفة';
         showNotice('تعذر الاتصال بالغرفة! تأكدي من صحة الرمز.');
       });
     } catch (e) {
+      clearTimeout(this.connectTimeout);
       if (statusElem) statusElem.innerText = 'حدث خطأ في الاتصال، حاولي ثانية.';
+      if (btnJoin) btnJoin.innerText = 'دخول الغرفة';
     }
   },
 
@@ -465,14 +506,15 @@ const Net = {
   },
 
   handleIncomingData(data, fromConn = null) {
+    if (!data || !data.type) return;
+
     if (data.type === 'ASSIGN_SLOT') {
       // Guest receives their slot assignment (2..6)
       state.mySlot = data.slot;
       state.isHost = false;
       state.onlineConnected = true;
-      state.players[state.mySlot - 1].name = state.localPlayerName;
-      if (state.selectedCharId) state.players[state.mySlot - 1].charId = state.selectedCharId;
 
+      // Update other players from Host
       if (data.players && Array.isArray(data.players)) {
         data.players.forEach((p, idx) => {
           if (idx !== state.mySlot - 1 && state.players[idx]) {
@@ -483,12 +525,18 @@ const Net = {
         });
       }
 
-      // Send back player intro to host
+      // Guest pins their own local name to their assigned slot!
+      const myP = state.players[state.mySlot - 1];
+      myP.name = state.localPlayerName;
+      myP.connected = true;
+      if (state.selectedCharId) myP.charId = state.selectedCharId;
+
+      // Send back player intro to host with HER real name and assigned slot
       this.send({
         type: 'PLAYER_INTRO',
         slot: state.mySlot,
         name: state.localPlayerName,
-        charId: state.players[state.mySlot - 1].charId
+        charId: myP.charId
       });
 
       updateOnlineLobbyUI();
@@ -505,7 +553,7 @@ const Net = {
       }
     } else if (data.type === 'PLAYER_JOINED') {
       // Notification that another guest joined
-      if (data.slot && state.players[data.slot - 1]) {
+      if (data.slot && data.slot !== state.mySlot && state.players[data.slot - 1]) {
         state.players[data.slot - 1].connected = true;
         if (data.name) state.players[data.slot - 1].name = data.name;
         if (data.charId) state.players[data.slot - 1].charId = data.charId;
@@ -513,64 +561,61 @@ const Net = {
       updateOnlineLobbyUI();
       sounds.playInteract();
     } else if (data.type === 'PLAYER_LEFT') {
-      if (data.slot && state.players[data.slot - 1]) {
+      if (data.slot && data.slot !== state.mySlot && state.players[data.slot - 1]) {
         state.players[data.slot - 1].connected = false;
       }
       updateOnlineLobbyUI();
     } else if (data.type === 'PLAYER_INTRO') {
-      const slot = data.slot || 2;
-      if (state.players[slot - 1]) {
+      const slot = data.slot;
+      // Strictly update the exact slot only (never touch local client's slot!)
+      if (slot && slot !== state.mySlot && state.players[slot - 1]) {
         state.players[slot - 1].connected = true;
         if (data.name) state.players[slot - 1].name = data.name;
         if (data.charId) state.players[slot - 1].charId = data.charId;
       }
-      // If host, relay intro to other connected guests
       if (state.isHost) {
         this.broadcast(data, fromConn ? fromConn.peer : null);
       }
       updateOnlineLobbyUI();
     } else if (data.type === 'NAME_CHANGE') {
-      const slot = data.slot || 1;
-      if (state.players[slot - 1]) {
-        state.players[slot - 1].name = data.name;
+      const slot = data.slot;
+      // Strictly update the exact slot only (never touch local client's slot!)
+      if (slot && slot !== state.mySlot && state.players[slot - 1]) {
+        if (data.name) state.players[slot - 1].name = data.name;
       }
       if (state.isHost) {
         this.broadcast(data, fromConn ? fromConn.peer : null);
       }
       updateOnlineLobbyUI();
     } else if (data.type === 'CHAR_CHANGE') {
-      const slot = data.slot || 1;
-      if (state.players[slot - 1]) {
-        state.players[slot - 1].charId = data.charId;
-        if (data.name) state.players[slot - 1].name = data.name;
+      const slot = data.slot;
+      if (slot && slot !== state.mySlot && state.players[slot - 1]) {
+        if (data.charId) state.players[slot - 1].charId = data.charId;
       }
       if (state.isHost) {
         this.broadcast(data, fromConn ? fromConn.peer : null);
       }
       updateOnlineLobbyUI();
     } else if (data.type === 'POS') {
-      const slot = data.slot || 1;
-      const targetP = state.players[slot - 1];
-      if (targetP) {
+      const slot = data.slot;
+      // POS ONLY updates position and animation, NEVER names or identities!
+      if (slot && slot !== state.mySlot && state.players[slot - 1]) {
+        const targetP = state.players[slot - 1];
         targetP.x = data.x;
         targetP.y = data.y;
         targetP.dir = data.dir;
         targetP.frame = data.frame;
         targetP.moving = data.moving;
         targetP.heldItems = data.heldItems || [];
-        if (data.charId) targetP.charId = data.charId;
-        if (data.name) targetP.name = data.name;
         if (typeof data.dancing !== 'undefined') targetP.dancing = data.dancing;
       }
-      // Host relays movement to other guests
       if (state.isHost) {
         this.broadcast(data, fromConn ? fromConn.peer : null);
       }
     } else if (data.type === 'ACTION') {
-      const slot = data.slot || 1;
-      const targetP = state.players[slot - 1];
-      if (targetP) {
-        handlePlayerAction(targetP);
+      const slot = data.slot;
+      if (slot && slot !== state.mySlot && state.players[slot - 1]) {
+        handlePlayerAction(state.players[slot - 1]);
       }
       if (state.isHost) {
         this.broadcast(data, fromConn ? fromConn.peer : null);
@@ -633,8 +678,8 @@ const Net = {
       spawnFloatingText(data.lights ? 'الإضاءة ساطعة!' : 'إضاءة هادئة', 840, 390, '#00e5ff');
       if (state.isHost) this.broadcast(data, fromConn ? fromConn.peer : null);
     } else if (data.type === 'PARTY_DANCE') {
-      const slot = data.slot || 1;
-      if (state.players[slot - 1]) {
+      const slot = data.slot;
+      if (slot && slot !== state.mySlot && state.players[slot - 1]) {
         state.players[slot - 1].dancing = data.dancing;
       }
       if (state.isHost) this.broadcast(data, fromConn ? fromConn.peer : null);
@@ -796,10 +841,10 @@ function initTouchControls() {
     const triggerAction = (e) => {
       e.preventDefault();
       if (state.levelRunning && !state.isPaused) {
-        const activeLocalPlayer = (state.mode === 'online' && !state.isHost) ? state.p2 : state.p1;
+        const activeLocalPlayer = getLocalPlayer();
         handlePlayerAction(activeLocalPlayer);
-        if (state.mode === 'online' && Net.conn) {
-          Net.send({ type: 'ACTION' });
+        if (state.mode === 'online') {
+          Net.send({ type: 'ACTION', slot: state.mySlot });
         }
       }
     };
@@ -830,8 +875,7 @@ function spawnSparks(x, y, count = 12, col = '#00ff88') {
 
 // Movement
 function updatePlayers() {
-  const isGuestOnline = (state.mode === 'online' && !state.isHost);
-  const activePlayer = isGuestOnline ? state.p2 : state.p1;
+  const activePlayer = getLocalPlayer();
 
   let dx = 0, dy = 0;
   if (keys['KeyW'] || keys['ArrowUp']) dy -= 1;
@@ -841,19 +885,19 @@ function updatePlayers() {
 
   movePlayer(activePlayer, dx, dy);
 
-  // Broadcast position over Net if online
-  if (state.mode === 'online' && Net.conn && state.tick % 3 === 0) {
+  // Broadcast position of local player over Net if online
+  const isNetActive = state.mode === 'online' && (state.isHost ? Object.keys(Net.conns).length > 0 : (Net.conn && Net.conn.open));
+  if (isNetActive && state.tick % 2 === 0) {
     Net.send({
       type: 'POS',
+      slot: state.mySlot,
       x: activePlayer.x,
       y: activePlayer.y,
       dir: activePlayer.dir,
       frame: activePlayer.frame,
       moving: activePlayer.moving,
       dancing: activePlayer.dancing,
-      heldItems: activePlayer.heldItems,
-      charId: activePlayer.charId,
-      name: activePlayer.name
+      heldItems: activePlayer.heldItems
     });
   }
 }
@@ -1748,14 +1792,25 @@ function setupUI() {
   // Player Name Input Setup (Appears under chosen character)
   const nameInput = document.getElementById('input-player-name');
   if (nameInput) {
-    nameInput.value = state.localPlayerName;
+    const savedName = localStorage.getItem('hiro_player_name');
+    if (savedName) {
+      state.localPlayerName = savedName;
+      nameInput.value = savedName;
+    } else {
+      state.localPlayerName = state.isHost ? 'هيرو' : 'صديقة';
+      nameInput.value = state.localPlayerName;
+    }
+
+    const localP = getLocalPlayer();
+    if (localP) localP.name = state.localPlayerName;
+
     nameInput.addEventListener('input', (e) => {
       const val = e.target.value.trim() || (state.isHost ? 'هيرو' : `صديقة ${state.mySlot}`);
       state.localPlayerName = val;
       localStorage.setItem('hiro_player_name', val);
 
-      const localP = getLocalPlayer();
-      localP.name = val;
+      const lp = getLocalPlayer();
+      if (lp) lp.name = val;
 
       updateOnlineLobbyUI();
       if (state.mode === 'online') {
@@ -1830,6 +1885,12 @@ function setupUI() {
     hostView.classList.remove('hidden');
     joinView.classList.add('hidden');
     state.isHost = true;
+    state.mySlot = 1;
+    if (!localStorage.getItem('hiro_player_name')) {
+      state.localPlayerName = 'هيرو';
+      if (nameInput) nameInput.value = 'هيرو';
+      state.players[0].name = 'هيرو';
+    }
     updateOnlineLobbyUI();
   });
 
@@ -1839,6 +1900,10 @@ function setupUI() {
     joinView.classList.remove('hidden');
     hostView.classList.add('hidden');
     state.isHost = false;
+    if (!localStorage.getItem('hiro_player_name') || state.localPlayerName === 'هيرو') {
+      state.localPlayerName = 'صديقة';
+      if (nameInput) nameInput.value = 'صديقة';
+    }
     updateOnlineLobbyUI();
   });
 
