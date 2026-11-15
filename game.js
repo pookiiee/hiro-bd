@@ -485,6 +485,14 @@ const Net = {
     }
   },
 
+  isActive() {
+    if (state.mode !== 'online') return false;
+    if (state.isHost) {
+      return Object.values(this.conns).some(c => c && c.open);
+    }
+    return !!(this.conn && this.conn.open);
+  },
+
   // Broadcast data to all guests (or all guests except one)
   broadcast(data, excludePeer = null) {
     if (state.isHost) {
@@ -956,7 +964,7 @@ function handlePlayerAction(player) {
         sounds.playInteract();
         spawnFloatingText('تم إشعال الشموع من جديد! تمنيا أمنية سعيدة', partyState.cake.x, partyState.cake.y - 75, '#ffd700');
       }
-      if (state.mode === 'online' && Net.conn) {
+      if (state.mode === 'online') {
         Net.send({ type: 'PARTY_CANDLES', lit: partyState.candlesLit });
       }
       return;
@@ -973,7 +981,7 @@ function handlePlayerAction(player) {
         triggerPartyConfetti(nearGift.x, nearGift.y, false);
       }
       spawnFloatingText('مياو!', nearGift.x, nearGift.y - 45, nearGift.color);
-      if (state.mode === 'online' && Net.conn) {
+      if (state.mode === 'online') {
         Net.send({ type: 'PARTY_GIFT', giftId: nearGift.id });
       }
       return;
@@ -983,7 +991,7 @@ function handlePlayerAction(player) {
     const nearCannon = partyState.confettiCannons.find(c => Math.hypot(player.x - c.x, player.y - c.y) < 58);
     if (nearCannon) {
       triggerPartyConfetti(nearCannon.x, nearCannon.y, true);
-      if (state.mode === 'online' && Net.conn) {
+      if (state.mode === 'online') {
         Net.send({ type: 'PARTY_CONFETTI', x: nearCannon.x, y: nearCannon.y });
       }
       return;
@@ -994,7 +1002,7 @@ function handlePlayerAction(player) {
       partyState.partyLights = !partyState.partyLights;
       sounds.playInteract();
       spawnFloatingText(partyState.partyLights ? 'الإضاءة ساطعة!' : 'إضاءة هادئة', 840, 390, '#00e5ff');
-      if (state.mode === 'online' && Net.conn) {
+      if (state.mode === 'online') {
         Net.send({ type: 'PARTY_LIGHTS', lights: partyState.partyLights });
       }
       return;
@@ -1265,7 +1273,7 @@ function updateCustomers() {
   });
 
   // Broadcast state to guest every 6 ticks
-  if (state.mode === 'online' && Net.conn && state.tick % 6 === 0) {
+  if (state.mode === 'online' && state.isHost && state.tick % 6 === 0) {
     Net.send({
       type: 'SYNC_STATE',
       timeRemaining: state.timeRemaining,
@@ -1370,7 +1378,7 @@ function startLevel(index, notifyRemote = true) {
   updateHUD();
   updateInventoryHUD();
 
-  if (notifyRemote && state.mode === 'online' && Net.conn) {
+  if (notifyRemote && state.mode === 'online') {
     Net.send({ type: 'START_LEVEL', levelIndex: index });
   }
 }
@@ -1497,7 +1505,7 @@ function enterPartyRoom(notifyRemote = true) {
   triggerPartyConfetti(200, 200, false);
   triggerPartyConfetti(760, 200, false);
 
-  if (notifyRemote && state.mode === 'online' && Net.conn) {
+  if (notifyRemote && state.mode === 'online') {
     Net.send({ type: 'ENTER_PARTY_ROOM' });
   }
 }
@@ -1591,9 +1599,8 @@ function updatePartyHUD() {
   if (normalHudActions) normalHudActions.classList.add('hidden');
 }
 
-// Render Loop
+// Render Drawing Function
 function render() {
-  state.tick++;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (state.scene === 'party') {
@@ -1654,17 +1661,36 @@ function render() {
     ctx.fillText(t.text, t.x, t.y);
     ctx.restore();
   });
+}
 
-  // Updates
-  if (state.levelRunning && !state.isPaused) {
-    updatePlayers();
-    if (state.scene !== 'party') {
-      updateCustomers();
+// Fixed 60 FPS Game Loop Engine (Locks game physics & speed equally across 60Hz, 120Hz, 144Hz & 240Hz screens)
+let lastFrameTime = performance.now();
+const FIXED_STEP_MS = 1000 / 60; // Exact 60 FPS timestep (16.6667ms)
+let frameAccumulator = 0;
+
+function gameLoop(currentTime) {
+  if (!currentTime) currentTime = performance.now();
+  const delta = Math.min(currentTime - lastFrameTime, 100);
+  lastFrameTime = currentTime;
+  frameAccumulator += delta;
+
+  // Run game updates at strictly 60 ticks per second regardless of screen refresh rate
+  while (frameAccumulator >= FIXED_STEP_MS) {
+    state.tick++;
+    if (state.levelRunning && !state.isPaused) {
+      updatePlayers();
+      if (state.scene !== 'party') {
+        updateCustomers();
+      }
+      updateEffects();
     }
-    updateEffects();
+    frameAccumulator -= FIXED_STEP_MS;
   }
 
-  requestAnimationFrame(render);
+  // Render smooth graphics on every screen refresh
+  render();
+
+  requestAnimationFrame(gameLoop);
 }
 
 // UI Setup & Event Listeners
@@ -2039,7 +2065,7 @@ function setupUI() {
         sounds.playInteract();
         spawnFloatingText('تم إشعال الشموع من جديد!', partyState.cake.x, partyState.cake.y - 70, '#ffd700');
       }
-      if (state.mode === 'online' && Net.conn) {
+      if (state.mode === 'online') {
         Net.send({ type: 'PARTY_CANDLES', lit: partyState.candlesLit });
       }
     });
@@ -2051,7 +2077,7 @@ function setupUI() {
       triggerPartyConfetti(480, 220, true);
       triggerPartyConfetti(200, 200, false);
       triggerPartyConfetti(760, 200, false);
-      if (state.mode === 'online' && Net.conn) {
+      if (state.mode === 'online') {
         Net.send({ type: 'PARTY_CONFETTI', x: 480, y: 220 });
       }
     });
@@ -2063,7 +2089,7 @@ function setupUI() {
       partyState.partyLights = !partyState.partyLights;
       sounds.playInteract();
       spawnFloatingText(partyState.partyLights ? 'الإضاءة ساطعة!' : 'إضاءة هادئة', 480, 200, '#00e5ff');
-      if (state.mode === 'online' && Net.conn) {
+      if (state.mode === 'online') {
         Net.send({ type: 'PARTY_LIGHTS', lights: partyState.partyLights });
       }
     });
@@ -2148,5 +2174,5 @@ function setupUI() {
 
 window.addEventListener('load', () => {
   setupUI();
-  requestAnimationFrame(render);
+  requestAnimationFrame(gameLoop);
 });
