@@ -100,6 +100,7 @@ const state = {
   scene: 'cafe', // 'cafe' or 'party'
   mode: 'solo', // 'solo' or 'online'
   isHost: true,
+  mySlot: 1, // 1 for host, 2..6 for guests
   onlineConnected: false,
   maxUnlockedLevel: parseInt(localStorage.getItem('hiro_max_unlocked_level') || '0', 10),
   partyUnlocked: (localStorage.getItem('hiro_party_unlocked') === 'true'),
@@ -114,38 +115,31 @@ const state = {
 
   localPlayerName: localStorage.getItem('hiro_player_name') || 'هيرو',
 
-  // Player 1 (Host / Solo Player)
-  p1: {
-    name: localStorage.getItem('hiro_player_name') || 'هيرو',
-    charId: 'danny',
-    x: 420,
-    y: 200,
-    speed: 3.5,
-    dir: 'down',
-    frame: 0,
-    moving: false,
-    dancing: false,
-    heldItems: [] // Capacity up to 3 items!
-  },
+  // 6 Playable Characters Slots (Host + up to 5 Online Friends!)
+  players: [
+    { id: 1, name: localStorage.getItem('hiro_player_name') || 'هيرو', charId: 'danny', x: 360, y: 200, speed: 3.5, dir: 'down', frame: 0, moving: false, dancing: false, heldItems: [], connected: true },
+    { id: 2, name: 'صديقة 2', charId: 'sam', x: 440, y: 200, speed: 3.5, dir: 'down', frame: 0, moving: false, dancing: false, heldItems: [], connected: false },
+    { id: 3, name: 'صديقة 3', charId: 'tucker', x: 520, y: 200, speed: 3.5, dir: 'down', frame: 0, moving: false, dancing: false, heldItems: [], connected: false },
+    { id: 4, name: 'صديقة 4', charId: 'jazz', x: 600, y: 200, speed: 3.5, dir: 'down', frame: 0, moving: false, dancing: false, heldItems: [], connected: false },
+    { id: 5, name: 'صديقة 5', charId: 'ember', x: 360, y: 250, speed: 3.5, dir: 'down', frame: 0, moving: false, dancing: false, heldItems: [], connected: false },
+    { id: 6, name: 'صديقة 6', charId: 'vlad', x: 600, y: 250, speed: 3.5, dir: 'down', frame: 0, moving: false, dancing: false, heldItems: [], connected: false }
+  ],
 
-  // Player 2 (Online Guest / Partner)
-  p2: {
-    name: 'لاعب 2',
-    charId: 'sam',
-    x: 540,
-    y: 200,
-    speed: 3.5,
-    dir: 'down',
-    frame: 0,
-    moving: false,
-    dancing: false,
-    heldItems: [] // Capacity up to 3 items!
-  },
+  // Backward compatibility getters
+  get p1() { return this.players[0]; },
+  get p2() { return this.players[1]; },
 
   spawnCooldown: 60,
   particles: [],
   floatingTexts: []
 };
+
+// Helper: Get the exact local player instance for this browser client
+function getLocalPlayer() {
+  const slot = (state.mode === 'online') ? (state.mySlot || 1) : 1;
+  const idx = Math.max(0, Math.min(5, slot - 1));
+  return state.players[idx];
+}
 
 // Birthday Party Celebration Hall State (Cat Gifts with Meow Sound & Unique Breeds!)
 const partyState = {
@@ -222,10 +216,11 @@ const partyState = {
   djBooth: { x: 840, y: 430 }
 };
 
-// PeerJS Online Multiplayer Manager
+// PeerJS Online Multiplayer Manager (Supports up to 6 players simultaneously!)
 const Net = {
   peer: null,
-  conn: null,
+  conn: null,       // Guest connection to Host
+  conns: {},        // Host map: peerId -> DataConnection (supports up to 5 guests)
   myCode: '',
 
   init(forceNewCode = false) {
@@ -241,6 +236,9 @@ const Net = {
       if (this.peer && !this.peer.destroyed) {
         try { this.peer.destroy(); } catch (e) {}
       }
+
+      this.conns = {};
+      this.conn = null;
 
       const randNum = forceNewCode ? Math.floor(1000 + Math.random() * 9000) : Math.floor(100 + Math.random() * 900);
       this.myCode = `HIRO-${randNum}`;
@@ -262,12 +260,95 @@ const Net = {
         updateOnlineLobbyUI();
       });
 
+      // Host listener for incoming connections from guests (up to 5 guests)
       this.peer.on('connection', (c) => {
-        this.conn = c;
         state.isHost = true;
-        state.p1.name = state.localPlayerName;
-        if (state.selectedCharId) state.p1.charId = state.selectedCharId;
-        this.setupConnection();
+        state.mySlot = 1;
+        state.players[0].name = state.localPlayerName;
+        if (state.selectedCharId) state.players[0].charId = state.selectedCharId;
+
+        c.on('open', () => {
+          const activeConns = Object.values(Net.conns).filter(conn => conn && conn.open);
+          if (activeConns.length >= 5) {
+            c.send({ type: 'ROOM_FULL', message: 'الغرفة ممتلئة بالكامل (الحد الأقصى 6 لاعبات).' });
+            setTimeout(() => c.close(), 600);
+            return;
+          }
+
+          // Find first unoccupied slot between 2 and 6
+          let assignedSlot = -1;
+          for (let s = 1; s < 6; s++) {
+            if (!state.players[s].connected) {
+              assignedSlot = s + 1;
+              break;
+            }
+          }
+          if (assignedSlot === -1) assignedSlot = activeConns.length + 2;
+
+          c.playerSlot = assignedSlot;
+          Net.conns[c.peer] = c;
+          state.players[assignedSlot - 1].connected = true;
+          state.onlineConnected = true;
+          state.mode = 'online';
+
+          // 1. Send slot assignment & current game state to new guest
+          c.send({
+            type: 'ASSIGN_SLOT',
+            slot: assignedSlot,
+            players: state.players.map(p => ({
+              id: p.id,
+              name: p.name,
+              charId: p.charId,
+              connected: p.connected,
+              x: p.x,
+              y: p.y
+            })),
+            scene: state.scene,
+            levelRunning: state.levelRunning,
+            currentLevelIndex: state.currentLevelIndex
+          });
+
+          // 2. Broadcast to other existing guests that a new player joined
+          Net.broadcast({
+            type: 'PLAYER_JOINED',
+            slot: assignedSlot,
+            name: state.players[assignedSlot - 1].name,
+            charId: state.players[assignedSlot - 1].charId
+          }, c.peer);
+
+          // 3. Listen for incoming data from this guest
+          c.on('data', (data) => {
+            Net.handleIncomingData(data, c);
+          });
+
+          c.on('close', () => {
+            const slot = c.playerSlot;
+            if (slot && state.players[slot - 1]) {
+              state.players[slot - 1].connected = false;
+            }
+            delete Net.conns[c.peer];
+            const remaining = Object.values(Net.conns).filter(conn => conn && conn.open).length;
+            if (remaining === 0) state.onlineConnected = false;
+            Net.broadcast({ type: 'PLAYER_LEFT', slot });
+            updateOnlineLobbyUI();
+          });
+
+          updateOnlineLobbyUI();
+          sounds.playCelebrationFanfare();
+          const totalInRoom = Object.values(Net.conns).filter(conn => conn && conn.open).length + 1;
+          showNotice(`انضمت صديقة جديدة للغرفة! (${totalInRoom}/6)`);
+
+          // If Host is ALREADY playing, immediately launch the new guest directly into the game!
+          if (state.levelRunning) {
+            setTimeout(() => {
+              if (state.scene === 'party') {
+                c.send({ type: 'ENTER_PARTY_ROOM' });
+              } else {
+                c.send({ type: 'START_LEVEL', levelIndex: state.currentLevelIndex });
+              }
+            }, 300);
+          }
+        });
       });
 
       this.peer.on('error', (err) => {
@@ -291,7 +372,7 @@ const Net = {
       showNotice('يرجى كتابة رمز الغرفة أولاً للانضمام.');
       return;
     }
-    // Normalize code so user can type: "489", "hiro-489", "HIRO-489", "HIRO489"
+    // Normalize code: accept "489", "hiro-489", "HIRO-489", "HIRO489"
     if (!raw.startsWith('HIRO-')) {
       const stripped = raw.replace(/^HIRO/i, '').replace(/^-/, '');
       raw = 'HIRO-' + (stripped || raw);
@@ -307,19 +388,15 @@ const Net = {
 
       this.conn = this.peer.connect(targetPeerId, { reliable: true });
       state.isHost = false;
-      state.p2.name = state.localPlayerName;
-      if (state.selectedCharId) state.p2.charId = state.selectedCharId;
 
       this.conn.on('open', () => {
         if (statusElem) statusElem.innerText = `تم الانضمام بنجاح إلى الغرفة (${raw})!`;
         state.onlineConnected = true;
         state.isHost = false;
-        state.p2.name = state.localPlayerName;
-        if (state.selectedCharId) state.p2.charId = state.selectedCharId;
-        
+
         const lobbyCodeVal = document.getElementById('lobby-code-val');
         if (lobbyCodeVal) lobbyCodeVal.innerText = raw;
-        
+
         sounds.playCelebrationFanfare();
         showNotice(`تم الانضمام بنجاح للغرفة (${raw})! بانتظار المضيفة لبدء اللعبة`);
         this.setupConnection();
@@ -347,141 +424,180 @@ const Net = {
 
     const hostStatus = document.getElementById('host-status');
     if (hostStatus) {
-      hostStatus.innerText = state.isHost ? 'انضمت الصديقة للغرفة! أنتما جاهزتان للبدء' : 'أنتِ متصلة بالغرفة!';
+      hostStatus.innerText = state.isHost ? 'الغرفة جاهزة، شاركي الرمز مع صديقاتك (حتى 6)' : 'أنتِ متصلة بالغرفة!';
     }
 
     updateOnlineLobbyUI();
 
-    this.conn.on('data', (data) => {
-      this.handleIncomingData(data);
-    });
-
-    // Exchange player identities and current game scene immediately
-    const sendIntro = () => {
-      const myLocalP = (state.mode === 'online' && !state.isHost) ? state.p2 : state.p1;
-      myLocalP.name = state.localPlayerName;
-      this.send({
-        type: 'PLAYER_INTRO',
-        name: state.localPlayerName,
-        charId: myLocalP.charId,
-        isHost: state.isHost,
-        scene: state.scene,
-        levelRunning: state.levelRunning,
-        currentLevelIndex: state.currentLevelIndex
+    if (this.conn) {
+      this.conn.on('data', (data) => {
+        this.handleIncomingData(data, this.conn);
       });
-    };
-    sendIntro();
-    setTimeout(sendIntro, 250);
-    setTimeout(sendIntro, 800);
 
-    // If host is ALREADY playing when guest connects, auto-launch guest directly!
-    if (state.isHost && state.levelRunning) {
-      setTimeout(() => {
-        if (state.scene === 'party') {
-          this.send({ type: 'ENTER_PARTY_ROOM' });
-        } else {
-          this.send({ type: 'START_LEVEL', levelIndex: state.currentLevelIndex });
-        }
-      }, 400);
+      this.conn.on('close', () => {
+        state.onlineConnected = false;
+        const netBadge = document.getElementById('net-status-badge');
+        if (netBadge) netBadge.innerText = 'انقطع الاتصال';
+        showNotice('انقطع الاتصال مع المضيفة.');
+        updateOnlineLobbyUI();
+      });
     }
-
-    this.conn.on('close', () => {
-      state.onlineConnected = false;
-      const netBadge = document.getElementById('net-status-badge');
-      if (netBadge) netBadge.innerText = 'انقطع الاتصال';
-      showNotice('انقطع الاتصال مع اللاعب الآخر.');
-      updateOnlineLobbyUI();
-    });
   },
 
+  // Broadcast data to all guests (or all guests except one)
+  broadcast(data, excludePeer = null) {
+    if (state.isHost) {
+      Object.keys(this.conns).forEach(pId => {
+        if (pId !== excludePeer && this.conns[pId] && this.conns[pId].open) {
+          try { this.conns[pId].send(data); } catch (e) {}
+        }
+      });
+    }
+  },
+
+  // Send data: if host, broadcasts to all guests; if guest, sends to host
   send(data) {
-    if (this.conn && this.conn.open) {
-      try {
-        this.conn.send(data);
-      } catch (e) {
-        console.warn('Network send error:', e);
-      }
+    if (state.isHost) {
+      this.broadcast(data);
+    } else if (this.conn && this.conn.open) {
+      try { this.conn.send(data); } catch (e) {}
     }
   },
 
-  handleIncomingData(data) {
-    if (data.type === 'POS') {
-      const targetP = state.isHost ? state.p2 : state.p1;
-      targetP.x = data.x;
-      targetP.y = data.y;
-      targetP.dir = data.dir;
-      targetP.frame = data.frame;
-      targetP.moving = data.moving;
-      targetP.heldItems = data.heldItems || [];
-      if (data.charId) targetP.charId = data.charId;
-      if (data.name) targetP.name = data.name;
-      if (typeof data.dancing !== 'undefined') targetP.dancing = data.dancing;
-    } else if (data.type === 'PLAYER_INTRO') {
-      if (state.isHost) {
-        state.p2.name = data.name || 'الصديقة';
-        if (data.charId) state.p2.charId = data.charId;
-      } else {
-        state.p1.name = data.name || 'هيرو';
-        if (data.charId) state.p1.charId = data.charId;
-        // If guest connects while host is ALREADY playing, enter directly!
-        if (data.levelRunning) {
-          if (data.scene === 'party') {
-            state.partyUnlocked = true;
-            enterPartyRoom(false);
-          } else {
-            startLevel(data.currentLevelIndex || 0, false);
-          }
-        }
-      }
-      updateOnlineLobbyUI();
+  handleIncomingData(data, fromConn = null) {
+    if (data.type === 'ASSIGN_SLOT') {
+      // Guest receives their slot assignment (2..6)
+      state.mySlot = data.slot;
+      state.isHost = false;
+      state.onlineConnected = true;
+      state.players[state.mySlot - 1].name = state.localPlayerName;
+      if (state.selectedCharId) state.players[state.mySlot - 1].charId = state.selectedCharId;
 
-      if (!data.isReply) {
-        const myLocalP = (state.mode === 'online' && !state.isHost) ? state.p2 : state.p1;
-        this.send({
-          type: 'PLAYER_INTRO',
-          name: state.localPlayerName,
-          charId: myLocalP.charId,
-          isHost: state.isHost,
-          scene: state.scene,
-          levelRunning: state.levelRunning,
-          currentLevelIndex: state.currentLevelIndex,
-          isReply: true
+      if (data.players && Array.isArray(data.players)) {
+        data.players.forEach((p, idx) => {
+          if (idx !== state.mySlot - 1 && state.players[idx]) {
+            state.players[idx].name = p.name;
+            state.players[idx].charId = p.charId;
+            state.players[idx].connected = p.connected;
+          }
         });
       }
-    } else if (data.type === 'NAME_CHANGE') {
+
+      // Send back player intro to host
+      this.send({
+        type: 'PLAYER_INTRO',
+        slot: state.mySlot,
+        name: state.localPlayerName,
+        charId: state.players[state.mySlot - 1].charId
+      });
+
+      updateOnlineLobbyUI();
+
+      // If host is already inside a running game, join directly!
+      if (data.levelRunning) {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+        if (data.scene === 'party') {
+          state.partyUnlocked = true;
+          enterPartyRoom(false);
+        } else {
+          startLevel(data.currentLevelIndex || 0, false);
+        }
+      }
+    } else if (data.type === 'PLAYER_JOINED') {
+      // Notification that another guest joined
+      if (data.slot && state.players[data.slot - 1]) {
+        state.players[data.slot - 1].connected = true;
+        if (data.name) state.players[data.slot - 1].name = data.name;
+        if (data.charId) state.players[data.slot - 1].charId = data.charId;
+      }
+      updateOnlineLobbyUI();
+      sounds.playInteract();
+    } else if (data.type === 'PLAYER_LEFT') {
+      if (data.slot && state.players[data.slot - 1]) {
+        state.players[data.slot - 1].connected = false;
+      }
+      updateOnlineLobbyUI();
+    } else if (data.type === 'PLAYER_INTRO') {
+      const slot = data.slot || 2;
+      if (state.players[slot - 1]) {
+        state.players[slot - 1].connected = true;
+        if (data.name) state.players[slot - 1].name = data.name;
+        if (data.charId) state.players[slot - 1].charId = data.charId;
+      }
+      // If host, relay intro to other connected guests
       if (state.isHost) {
-        state.p2.name = data.name || 'الصديقة';
-      } else {
-        state.p1.name = data.name || 'هيرو';
+        this.broadcast(data, fromConn ? fromConn.peer : null);
+      }
+      updateOnlineLobbyUI();
+    } else if (data.type === 'NAME_CHANGE') {
+      const slot = data.slot || 1;
+      if (state.players[slot - 1]) {
+        state.players[slot - 1].name = data.name;
+      }
+      if (state.isHost) {
+        this.broadcast(data, fromConn ? fromConn.peer : null);
       }
       updateOnlineLobbyUI();
     } else if (data.type === 'CHAR_CHANGE') {
-      const targetP = state.isHost ? state.p2 : state.p1;
-      if (data.charId) targetP.charId = data.charId;
-      if (data.name) targetP.name = data.name;
+      const slot = data.slot || 1;
+      if (state.players[slot - 1]) {
+        state.players[slot - 1].charId = data.charId;
+        if (data.name) state.players[slot - 1].name = data.name;
+      }
+      if (state.isHost) {
+        this.broadcast(data, fromConn ? fromConn.peer : null);
+      }
       updateOnlineLobbyUI();
+    } else if (data.type === 'POS') {
+      const slot = data.slot || 1;
+      const targetP = state.players[slot - 1];
+      if (targetP) {
+        targetP.x = data.x;
+        targetP.y = data.y;
+        targetP.dir = data.dir;
+        targetP.frame = data.frame;
+        targetP.moving = data.moving;
+        targetP.heldItems = data.heldItems || [];
+        if (data.charId) targetP.charId = data.charId;
+        if (data.name) targetP.name = data.name;
+        if (typeof data.dancing !== 'undefined') targetP.dancing = data.dancing;
+      }
+      // Host relays movement to other guests
+      if (state.isHost) {
+        this.broadcast(data, fromConn ? fromConn.peer : null);
+      }
     } else if (data.type === 'ACTION') {
-      const remotePlayer = state.isHost ? state.p2 : state.p1;
-      handlePlayerAction(remotePlayer);
+      const slot = data.slot || 1;
+      const targetP = state.players[slot - 1];
+      if (targetP) {
+        handlePlayerAction(targetP);
+      }
+      if (state.isHost) {
+        this.broadcast(data, fromConn ? fromConn.peer : null);
+      }
     } else if (data.type === 'SYNC_STATE' && !state.isHost) {
       state.timeRemaining = data.timeRemaining;
       state.coins = data.coins;
       state.servedCount = data.servedCount;
       state.currentLevelIndex = data.currentLevelIndex;
 
-      data.tables.forEach((t, i) => { TABLES[i].customer = t.customer; });
-      data.stations.forEach((s, i) => {
-        STATIONS[i].busy = s.busy;
-        STATIONS[i].progress = s.progress;
-      });
+      if (data.tables) {
+        data.tables.forEach((t, i) => { if (TABLES[i]) TABLES[i].customer = t.customer; });
+      }
+      if (data.stations) {
+        data.stations.forEach((s, i) => {
+          if (STATIONS[i]) {
+            STATIONS[i].busy = s.busy;
+            STATIONS[i].progress = s.progress;
+          }
+        });
+      }
 
       updateHUD();
     } else if (data.type === 'START_LEVEL') {
-      // Guest automatically enters level directly together with the host!
       document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
       startLevel(data.levelIndex, false);
     } else if (data.type === 'ENTER_PARTY_ROOM') {
-      // Guest automatically enters party room directly together with the host!
       document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
       state.partyUnlocked = true;
       localStorage.setItem('hiro_party_unlocked', 'true');
@@ -497,6 +613,7 @@ const Net = {
         sounds.playInteract();
         spawnFloatingText('تم إشعال الشموع من جديد! تمنيا أمنية سعيدة', partyState.cake.x, partyState.cake.y - 70, '#ffd700');
       }
+      if (state.isHost) this.broadcast(data, fromConn ? fromConn.peer : null);
     } else if (data.type === 'PARTY_GIFT') {
       const g = partyState.gifts.find(x => x.id === data.giftId);
       if (g) {
@@ -506,20 +623,26 @@ const Net = {
         triggerPartyConfetti(g.x, g.y, false);
         spawnFloatingText('مياو!', g.x, g.y - 45, g.color);
       }
+      if (state.isHost) this.broadcast(data, fromConn ? fromConn.peer : null);
     } else if (data.type === 'PARTY_CONFETTI') {
       triggerPartyConfetti(data.x, data.y, true);
+      if (state.isHost) this.broadcast(data, fromConn ? fromConn.peer : null);
     } else if (data.type === 'PARTY_LIGHTS') {
       partyState.partyLights = data.lights;
       sounds.playInteract();
       spawnFloatingText(data.lights ? 'الإضاءة ساطعة!' : 'إضاءة هادئة', 840, 390, '#00e5ff');
+      if (state.isHost) this.broadcast(data, fromConn ? fromConn.peer : null);
     } else if (data.type === 'PARTY_DANCE') {
-      const remoteP = state.isHost ? state.p2 : state.p1;
-      remoteP.dancing = data.dancing;
+      const slot = data.slot || 1;
+      if (state.players[slot - 1]) {
+        state.players[slot - 1].dancing = data.dancing;
+      }
+      if (state.isHost) this.broadcast(data, fromConn ? fromConn.peer : null);
     }
   }
 };
 
-// Real-time Online Room Lobby UI & Permissions Updater
+// Real-time Online Room Lobby UI & Permissions Updater (Supports 6 Players!)
 function updateOnlineLobbyUI() {
   const codeVal = document.getElementById('lobby-code-val');
   if (codeVal) {
@@ -527,62 +650,77 @@ function updateOnlineLobbyUI() {
   }
 
   const countBadge = document.getElementById('lobby-members-count-badge');
-  const pill2 = document.getElementById('lobby-pill-p2');
-  const name1 = document.getElementById('lobby-name-p1');
-  const status1 = document.getElementById('lobby-status-p1');
-  const name2 = document.getElementById('lobby-name-p2');
-  const status2 = document.getElementById('lobby-status-p2');
   const banner = document.getElementById('lobby-instruction-banner');
   const btnPlay = document.getElementById('btn-play-game');
 
-  const hostDisplayName = state.p1.name || 'هيرو';
-  const guestDisplayName = state.p2.name || 'الصديقة';
+  // Count active connected players
+  let connectedCount = 1;
+  if (state.mode === 'online') {
+    connectedCount = state.players.filter((p, i) => i === 0 || p.connected).length;
+  }
 
-  if (name1) name1.innerText = hostDisplayName;
-  if (status1) status1.innerText = state.isHost ? 'أنتِ (المضيفة)' : 'المضيفة (جاهزة)';
-
-  if (state.onlineConnected) {
-    if (countBadge) {
-      countBadge.innerText = 'اللاعبون: (2/2)';
+  if (countBadge) {
+    countBadge.innerText = `اللاعبون: (${connectedCount}/6)`;
+    if (connectedCount > 1) {
       countBadge.classList.add('connected');
-    }
-    if (pill2) pill2.classList.add('connected');
-    if (name2) name2.innerText = guestDisplayName;
-    if (status2) {
-      status2.innerText = state.isHost ? 'متصلة وجاهزة' : 'أنتِ (متصلة)';
-      status2.className = 'pill-status ready';
-    }
-    if (banner) {
-      if (state.isHost) {
-        banner.innerText = `انضمت ${guestDisplayName}! أنتِ مضيفة الغرفة، اضغطي (بدء اللعب) للانطلاق معاً!`;
-        banner.className = 'lobby-instruction ready-to-play';
-      } else {
-        banner.innerText = `أنتِ متصلة بغرفة ${hostDisplayName}! بانتظار المضيفة لبدء اللعبة...`;
-        banner.className = 'lobby-instruction guest-waiting';
-      }
-    }
-  } else {
-    if (countBadge) {
-      countBadge.innerText = 'اللاعبون: (1/2)';
+    } else {
       countBadge.classList.remove('connected');
     }
-    if (pill2) pill2.classList.remove('connected');
-    if (name2) name2.innerText = 'بانتظار الصديقة...';
-    if (status2) {
-      status2.innerText = 'غير متصلة';
-      status2.className = 'pill-status waiting';
-    }
-    if (banner) {
-      if (state.isHost) {
-        banner.innerText = 'شاركي رمز الغرفة مع صديقتك لتنضم إليكِ';
+  }
+
+  // Update all 6 slots in the lobby card
+  for (let i = 1; i <= 6; i++) {
+    const pill = document.getElementById(`lobby-pill-p${i}`);
+    const nameEl = document.getElementById(`lobby-name-p${i}`);
+    const statusEl = document.getElementById(`lobby-status-p${i}`);
+    const p = state.players[i - 1];
+
+    if (!pill || !nameEl || !statusEl || !p) continue;
+
+    if (i === 1) {
+      // Host Slot
+      nameEl.innerText = p.name || 'هيرو';
+      statusEl.innerText = state.isHost ? 'أنتِ (المضيفة)' : 'المضيفة (جاهزة)';
+      statusEl.className = 'pill-status ready';
+    } else {
+      // Guest Slots (2 to 6)
+      if (state.mode === 'online' && p.connected) {
+        pill.classList.add('connected');
+        nameEl.innerText = p.name || `الضيفة ${i}`;
+        statusEl.innerText = (i === state.mySlot) ? 'أنتِ (متصلة)' : 'متصلة وجاهزة';
+        statusEl.className = 'pill-status ready';
       } else {
-        banner.innerText = 'أدخلي رمز الغرفة للمشاركة مع صديقتك';
+        pill.classList.remove('connected');
+        nameEl.innerText = 'بانتظار الصديقة...';
+        statusEl.innerText = 'شاغر';
+        statusEl.className = 'pill-status waiting';
       }
+    }
+  }
+
+  // Instruction Banner
+  if (banner) {
+    if (state.mode === 'online') {
+      if (state.isHost) {
+        if (connectedCount > 1) {
+          banner.innerText = `انضمت ${connectedCount - 1} صديقات! أنتِ مضيفة الغرفة، اضغطي (بدء اللعب) للانطلاق معاً`;
+          banner.className = 'lobby-instruction ready-to-play';
+        } else {
+          banner.innerText = 'شاركي رمز الغرفة مع صديقاتك لينضممن إليكِ (حتى 6 لاعبات)';
+          banner.className = 'lobby-instruction';
+        }
+      } else {
+        const hostName = state.players[0].name || 'هيرو';
+        banner.innerText = `أنتِ متصلة بغرفة ${hostName}! بانتظار المضيفة لبدء اللعبة...`;
+        banner.className = 'lobby-instruction guest-waiting';
+      }
+    } else {
+      banner.innerText = 'شاركي رمز الغرفة مع صديقاتك لينضممن إليكِ (حتى 6 لاعبات)';
       banner.className = 'lobby-instruction';
     }
   }
 
-  // Permissions on Start Button: Guest CANNOT start, only Host can start!
+  // Start Button Permissions: Guest CANNOT start, only Host can start!
   if (btnPlay) {
     if (state.mode === 'online' && !state.isHost) {
       btnPlay.classList.add('guest-waiting-btn');
@@ -590,9 +728,9 @@ function updateOnlineLobbyUI() {
       btnPlay.title = 'فقط مضيفة الغرفة يمكنها بدء اللعبة';
     } else if (state.mode === 'online' && state.isHost) {
       btnPlay.classList.remove('guest-waiting-btn');
-      if (state.onlineConnected) {
-        btnPlay.innerText = `بدء اللعب مع ${guestDisplayName}!`;
-        btnPlay.title = 'انطلاق اللعبة لكليكما معاً';
+      if (connectedCount > 1) {
+        btnPlay.innerText = `بدء اللعب مع الصديقات (${connectedCount} لاعبات)!`;
+        btnPlay.title = 'انطلاق اللعبة للجميع معاً';
       } else {
         btnPlay.innerText = 'بدء اللعب';
         btnPlay.title = 'بدء اللعب';
@@ -615,11 +753,11 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Space' || e.key === ' ' || e.code === 'Enter') {
     e.preventDefault();
     if (state.levelRunning && !state.isPaused) {
-      const activeLocalPlayer = (state.mode === 'online' && !state.isHost) ? state.p2 : state.p1;
+      const activeLocalPlayer = getLocalPlayer();
       handlePlayerAction(activeLocalPlayer);
 
-      if (state.mode === 'online' && Net.conn) {
-        Net.send({ type: 'ACTION' });
+      if (state.mode === 'online') {
+        Net.send({ type: 'ACTION', slot: state.mySlot });
       }
     }
   }
@@ -950,7 +1088,7 @@ function handlePlayerAction(player) {
 
 // Update HUD for player inventory text (Visible both on character, bottom bar, and top screen pill)
 function updateInventoryHUD() {
-  const activeLocalPlayer = (state.mode === 'online' && !state.isHost) ? state.p2 : state.p1;
+  const activeLocalPlayer = getLocalPlayer();
   const items = activeLocalPlayer.heldItems;
 
   const itemData = {
@@ -1041,7 +1179,8 @@ function updateCustomers() {
     const freeTables = TABLES.filter(t => t.customer === null);
     if (freeTables.length > 0) {
       const chosenTable = freeTables[Math.floor(Math.random() * freeTables.length)];
-      const freeCustTypes = CUSTOMER_TYPES.filter(t => t !== state.p1.charId && t !== state.p2.charId);
+      const activeCharIds = state.players.filter(p => p.connected).map(p => p.charId);
+      const freeCustTypes = CUSTOMER_TYPES.filter(t => !activeCharIds.includes(t));
       const randomType = (freeCustTypes.length > 0) ? freeCustTypes[Math.floor(Math.random() * freeCustTypes.length)] : 'danny';
 
       const combo = [];
@@ -1140,10 +1279,25 @@ function startLevel(index, notifyRemote = true) {
 
   TABLES.forEach(t => t.customer = null);
   STATIONS.forEach(s => { s.busy = false; s.progress = 0; });
-  state.p1.heldItems = [];
-  state.p2.heldItems = [];
-  state.p1.dancing = false;
-  state.p2.dancing = false;
+
+  const cafeSpawns = [
+    { x: 340, y: 200 },
+    { x: 420, y: 200 },
+    { x: 500, y: 200 },
+    { x: 580, y: 200 },
+    { x: 380, y: 250 },
+    { x: 540, y: 250 }
+  ];
+
+  state.players.forEach((p, idx) => {
+    p.heldItems = [];
+    p.dancing = false;
+    p.moving = false;
+    if (cafeSpawns[idx]) {
+      p.x = cafeSpawns[idx].x;
+      p.y = cafeSpawns[idx].y;
+    }
+  });
 
   const partyHudActions = document.getElementById('party-hud-actions');
   const normalHudActions = document.querySelector('.footer-actions');
@@ -1263,16 +1417,25 @@ function enterPartyRoom(notifyRemote = true) {
   // Close all modals
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
 
-  // Position players nicely in the Party Room
-  state.p1.x = 430;
-  state.p1.y = 350;
-  state.p1.dancing = false;
-  state.p1.heldItems = [];
+  // Position all 6 players nicely across the Dance Floor
+  const partySpawns = [
+    { x: 340, y: 350 },
+    { x: 400, y: 350 },
+    { x: 460, y: 350 },
+    { x: 520, y: 350 },
+    { x: 580, y: 350 },
+    { x: 640, y: 350 }
+  ];
 
-  state.p2.x = 530;
-  state.p2.y = 350;
-  state.p2.dancing = false;
-  state.p2.heldItems = [];
+  state.players.forEach((p, idx) => {
+    p.dancing = false;
+    p.moving = false;
+    p.heldItems = [];
+    if (partySpawns[idx]) {
+      p.x = partySpawns[idx].x;
+      p.y = partySpawns[idx].y;
+    }
+  });
 
   // Reset party state
   partyState.candlesLit = true;
@@ -1326,8 +1489,8 @@ function toggleDance(player) {
   } else {
     spawnFloatingText('توقف الرقص', player.x, player.y - 35, '#aaa');
   }
-  if (state.mode === 'online' && Net.conn) {
-    Net.send({ type: 'PARTY_DANCE', dancing: player.dancing });
+  if (state.mode === 'online') {
+    Net.send({ type: 'PARTY_DANCE', slot: state.mySlot, dancing: player.dancing });
   }
 }
 
@@ -1393,14 +1556,13 @@ function render() {
     // 1. Party Room Environment
     Sprites.drawPartyRoom(ctx, canvas.width, canvas.height, state.tick, partyState);
 
-    // 2. Draw Characters (with custom names underneath in small font!)
-    const p1Online = (state.mode === 'online' && !state.isHost);
-    Sprites.drawCharacter(ctx, state.p1.x, state.p1.y, state.p1.charId || 'danny', state.p1.frame, state.p1.dir, state.p1.heldItems, p1Online, state.p1.name, state.p1.dancing);
-
-    if (state.mode === 'online') {
-      const p2Online = state.isHost;
-      Sprites.drawCharacter(ctx, state.p2.x, state.p2.y, state.p2.charId || 'sam', state.p2.frame, state.p2.dir, state.p2.heldItems, p2Online, state.p2.name, state.p2.dancing);
-    }
+    // 2. Draw all active players on the dance floor (up to 6 players!)
+    state.players.forEach((p, idx) => {
+      if (idx === 0 || (state.mode === 'online' && p.connected)) {
+        const isOnlineFriend = (idx !== (state.mySlot - 1));
+        Sprites.drawCharacter(ctx, p.x, p.y, p.charId || 'danny', p.frame, p.dir, p.heldItems || [], isOnlineFriend, p.name, p.dancing);
+      }
+    });
   } else {
     // 1. Cafe Environment
     Sprites.drawEnvironment(ctx, canvas.width, canvas.height, state.tick);
@@ -1419,14 +1581,13 @@ function render() {
       }
     });
 
-    // 4. Draw Characters (with custom names underneath in small font!)
-    const p1Online = (state.mode === 'online' && !state.isHost);
-    Sprites.drawCharacter(ctx, state.p1.x, state.p1.y, state.p1.charId || 'danny', state.p1.frame, state.p1.dir, state.p1.heldItems, p1Online, state.p1.name, state.p1.dancing);
-
-    if (state.mode === 'online') {
-      const p2Online = state.isHost;
-      Sprites.drawCharacter(ctx, state.p2.x, state.p2.y, state.p2.charId || 'sam', state.p2.frame, state.p2.dir, state.p2.heldItems, p2Online, state.p2.name, state.p2.dancing);
-    }
+    // 4. Draw all active players in the cafe (up to 6 players!)
+    state.players.forEach((p, idx) => {
+      if (idx === 0 || (state.mode === 'online' && p.connected)) {
+        const isOnlineFriend = (idx !== (state.mySlot - 1));
+        Sprites.drawCharacter(ctx, p.x, p.y, p.charId || 'danny', p.frame, p.dir, p.heldItems || [], isOnlineFriend, p.name, p.dancing);
+      }
+    });
   }
 
   // 5. Particles & Texts
@@ -1589,19 +1750,16 @@ function setupUI() {
   if (nameInput) {
     nameInput.value = state.localPlayerName;
     nameInput.addEventListener('input', (e) => {
-      const val = e.target.value.trim() || 'لاعب';
+      const val = e.target.value.trim() || (state.isHost ? 'هيرو' : `صديقة ${state.mySlot}`);
       state.localPlayerName = val;
       localStorage.setItem('hiro_player_name', val);
 
-      if (state.mode === 'online' && !state.isHost) {
-        state.p2.name = val;
-      } else {
-        state.p1.name = val;
-      }
+      const localP = getLocalPlayer();
+      localP.name = val;
 
       updateOnlineLobbyUI();
-      if (state.mode === 'online' && Net.conn) {
-        Net.send({ type: 'NAME_CHANGE', name: val });
+      if (state.mode === 'online') {
+        Net.send({ type: 'NAME_CHANGE', slot: state.mySlot, name: val });
       }
     });
   }

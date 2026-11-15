@@ -776,27 +776,29 @@ html, body {
 
 .lobby-players-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   margin-bottom: 10px;
 }
 
-@media (max-width: 540px) {
+@media (max-width: 640px) {
   .lobby-players-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
   }
 }
 
 .lobby-player-pill {
   background: rgba(28, 14, 54, 0.7);
   border: 1px solid #5a3094;
-  border-radius: 10px;
-  padding: 8px 10px;
+  border-radius: 8px;
+  padding: 6px 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   transition: all 0.25s;
+  min-height: 44px;
 }
 
 .lobby-player-pill.host-pill {
@@ -807,7 +809,7 @@ html, body {
 .lobby-player-pill.guest-pill.connected {
   border-color: var(--ghost-cyan);
   background: rgba(0, 229, 255, 0.1);
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
 }
 
 .lobby-player-pill .pill-info {
@@ -815,25 +817,31 @@ html, body {
   flex-direction: column;
   flex: 1;
   text-align: right;
+  overflow: hidden;
 }
 
 .lobby-player-pill .pill-role {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--text-dim);
+  white-space: nowrap;
 }
 
 .lobby-player-pill .pill-name {
-  font-size: 0.95rem;
-  font-weight: 900;
+  font-size: 0.85rem;
+  font-weight: 800;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .lobby-player-pill .pill-status {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 6px;
+  padding: 2px 5px;
+  border-radius: 5px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .lobby-player-pill .pill-status.ready {
