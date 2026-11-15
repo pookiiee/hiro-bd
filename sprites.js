@@ -130,11 +130,11 @@ const Sprites = {
 
     // Clear readable text badge above the tray showing what you are holding
     const itemNamesArabic = {
-      burger: 'برجر 🍔',
-      shake: 'عصير 🥤',
-      fries: 'بطاطس 🍟',
-      tea: 'شاي 🍵',
-      cupcake: 'كيك 🎂'
+      burger: 'برجر',
+      shake: 'عصير',
+      fries: 'بطاطس',
+      tea: 'شاي',
+      cupcake: 'كيك'
     };
     const textLabel = heldItems.map(i => itemNamesArabic[i] || i).join(' + ');
 
@@ -169,9 +169,10 @@ const Sprites = {
       ctx.translate(danceSway, 0);
       // Floating musical notes & sparkles above head
       const noteBob = (frame * 1.5) % 36;
-      const notes = ['🎵', '🎶', '✨', '💚'];
+      const notes = ['♪', '♫', '✦', '★'];
       const noteIndex = Math.floor(frame / 18) % notes.length;
-      ctx.font = '12px Arial';
+      ctx.fillStyle = this.colors.ectoGreenBright;
+      ctx.font = 'bold 13px Arial';
       ctx.fillText(notes[noteIndex], -8, -52 - noteBob * 0.4);
       ctx.fillText(notes[(noteIndex + 1) % notes.length], 8, -60 - noteBob * 0.3);
     }
@@ -188,7 +189,7 @@ const Sprites = {
       ember: 'إمبر مكلين',
       box: 'شبح الصناديق'
     };
-    const displayName = tagText || (isOnlineFriend ? `${charNames[charId] || charId} 🟢` : charNames[charId] || charId);
+    const displayName = tagText || charNames[charId] || charId;
 
     if (displayName) {
       // Put name UNDERNEATH the character in clear, readable font
@@ -667,9 +668,14 @@ const Sprites = {
       ctx.fillRect(-12, -14, 24, 28);
       ctx.fillStyle = '#ff4444';
       ctx.fillRect(-14, -18, 28, 5);
-      ctx.fillStyle = '#fff';
-      ctx.font = '10px Arial';
-      ctx.fillText('🗑️', -7, 4);
+      // Clean vector bin icon
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.rect(-5, -4, 10, 10);
+      ctx.moveTo(-7, -4); ctx.lineTo(7, -4);
+      ctx.moveTo(-2, -6); ctx.lineTo(2, -6);
+      ctx.stroke();
     }
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
@@ -737,7 +743,7 @@ const Sprites = {
         ctx.fillStyle = '#060e0a';
         ctx.font = 'bold 9px Tajawal, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('✓ جاهز!', 0, -15);
+        ctx.fillText('جاهز', 0, -15);
       }
 
     } else if (station.id === 'trash') {
@@ -748,10 +754,14 @@ const Sprites = {
       ctx.strokeStyle = '#ff4444';
       ctx.lineWidth = 2;
       ctx.stroke();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('🗑️', 0, 4);
+      // Clean vector bin icon
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.rect(-5, -4, 10, 10);
+      ctx.moveTo(-7, -4); ctx.lineTo(7, -4);
+      ctx.moveTo(-2, -6); ctx.lineTo(2, -6);
+      ctx.stroke();
     }
 
     ctx.restore();
@@ -996,7 +1006,7 @@ const Sprites = {
     ctx.textAlign = 'center';
     ctx.shadowColor = this.colors.ectoGreen;
     ctx.shadowBlur = 10;
-    ctx.fillText('✨🎉 كل عام وأنتِ بألف خير وسعادة يا هيرو! 🎉✨', width / 2, bannerY + 29);
+    ctx.fillText('كل عام وأنتِ بألف خير وسعادة يا هيرو!', width / 2, bannerY + 29);
     ctx.shadowBlur = 0;
 
     // Floor Base (Deep party tiles)
@@ -1053,7 +1063,7 @@ const Sprites = {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = 'bold 11px Tajawal, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('💃 ساحة الرقص والاحتفال 🕺', df.x, dfY + df.height + 18);
+    ctx.fillText('ساحة الرقص والاحتفال', df.x, dfY + df.height + 18);
 
     // 3. AMBIENT DISCO BEAMS (Sweeping spotlights across room)
     if (partyState.partyLights) {
@@ -1194,9 +1204,9 @@ const Sprites = {
 
     // Floating Interaction Badge Above Cake
     const badgeBob = Math.sin(tick * 0.08) * 3;
-    const badgeText = candlesLit ? '🕯️ اضغطي هنا لإطفاء الشموع! 💨' : '✨ طفيتي الشموع! كل عام وأنتِ بخير 💚';
+    const badgeText = candlesLit ? 'اضغطي لإطفاء الشموع' : 'تم إطفاء الشموع! كل عام وأنتِ بخير';
     ctx.fillStyle = 'rgba(8, 4, 18, 0.94)';
-    const badgeW = 210;
+    const badgeW = 200;
     ctx.beginPath();
     ctx.roundRect(x - badgeW / 2, y - 82 + badgeBob, badgeW, 20, 6);
     ctx.fill();
@@ -1250,7 +1260,7 @@ const Sprites = {
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 9px Tajawal, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🎁 اضغطي لفتحها', gift.x, gift.y - 21 + bob);
+      ctx.fillText('اضغطي لفتح الهدية', gift.x, gift.y - 21 + bob);
     } else {
       // Opened Gift Box with cute revealed kitten (No text badges - just the pure cute cat!)
       ctx.fillStyle = gift.color;
@@ -1417,9 +1427,21 @@ const Sprites = {
     // Cute floating sparkles around the kitten
     const sparkleBob = Math.sin(tick * 0.15) * 3;
     ctx.fillStyle = eyeCol;
-    ctx.font = '10px Arial';
-    ctx.fillText('✨', -14, -18 + sparkleBob);
-    ctx.fillText('🐾', 13, -20 - sparkleBob);
+    ctx.beginPath();
+    ctx.moveTo(-14, -18 + sparkleBob - 3);
+    ctx.lineTo(-11, -18 + sparkleBob);
+    ctx.lineTo(-14, -18 + sparkleBob + 3);
+    ctx.lineTo(-17, -18 + sparkleBob);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(13, -20 - sparkleBob - 2.5);
+    ctx.lineTo(15.5, -20 - sparkleBob);
+    ctx.lineTo(13, -20 - sparkleBob + 2.5);
+    ctx.lineTo(10.5, -20 - sparkleBob);
+    ctx.closePath();
+    ctx.fill();
 
     ctx.restore();
   },
@@ -1459,7 +1481,7 @@ const Sprites = {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 8.5px Tajawal, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('🎉 مدفع المفرقعات', 0, 31);
+    ctx.fillText('مدفع المفرقعات', 0, 31);
 
     ctx.restore();
   },
@@ -1503,7 +1525,7 @@ const Sprites = {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 8.5px Tajawal, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('💡 إضاءة الحفلة', 0, 30);
+    ctx.fillText('إضاءة الحفلة', 0, 30);
 
     ctx.restore();
   },

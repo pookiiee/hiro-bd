@@ -10,11 +10,11 @@ const ctx = canvas.getContext('2d');
 
 // Item Names in Natural Arabic for Messages & HUD
 const ITEM_NAMES = {
-  burger: 'برجر 🍔',
-  shake: 'عصير 🥤',
-  fries: 'بطاطس 🍟',
-  tea: 'شاي 🍵',
-  cupcake: 'كب كيك 🧁'
+  burger: 'برجر',
+  shake: 'عصير',
+  fries: 'بطاطس',
+  tea: 'شاي',
+  cupcake: 'كعكة'
 };
 
 // Levels with Progressive Combined Orders
@@ -51,7 +51,7 @@ const LEVELS = [
   },
   {
     id: 4,
-    title: 'المرحلة 4: حفلة ميلاد هيرو الكبرى! 🎂',
+    title: 'المرحلة 4: قاعة احتفال هيرو الكبرى',
     target: 8,
     time: 210,
     comboSize: 3,
@@ -63,12 +63,12 @@ const LEVELS = [
 
 // Kitchen Cooking Stations
 const STATIONS = [
-  { id: 'shakeMachine', name: 'عصير الشبح 🥤', item: 'shake', x: 250, y: 130, cookTime: 75, busy: false, progress: 0 },
-  { id: 'fryer', name: 'بطاطس مقلية 🍟', item: 'fries', x: 370, y: 130, cookTime: 70, busy: false, progress: 0 },
-  { id: 'grill', name: 'شواية البرجر 🍔', item: 'burger', x: 490, y: 130, cookTime: 110, busy: false, progress: 0 },
-  { id: 'teaKettle', name: 'شاي الأشباح 🍵', item: 'tea', x: 610, y: 130, cookTime: 75, busy: false, progress: 0 },
-  { id: 'cupcakeOven', name: 'فرن الكيك 🎂', item: 'cupcake', x: 730, y: 130, cookTime: 85, busy: false, progress: 0 },
-  { id: 'trash', name: 'سلة الزبالة 🗑️', item: null, x: 130, y: 130, cookTime: 0, busy: false, progress: 0 }
+  { id: 'shakeMachine', name: 'عصير الشبح', item: 'shake', x: 250, y: 130, cookTime: 75, busy: false, progress: 0 },
+  { id: 'fryer', name: 'بطاطس مقلية', item: 'fries', x: 370, y: 130, cookTime: 70, busy: false, progress: 0 },
+  { id: 'grill', name: 'شواية البرجر', item: 'burger', x: 490, y: 130, cookTime: 110, busy: false, progress: 0 },
+  { id: 'teaKettle', name: 'شاي الأشباح', item: 'tea', x: 610, y: 130, cookTime: 75, busy: false, progress: 0 },
+  { id: 'cupcakeOven', name: 'فرن الكعك', item: 'cupcake', x: 730, y: 130, cookTime: 85, busy: false, progress: 0 },
+  { id: 'trash', name: 'سلة المهملات', item: null, x: 130, y: 130, cookTime: 0, busy: false, progress: 0 }
 ];
 
 // Playable Characters Registry (Danny Phantom Universe Only)
@@ -164,10 +164,10 @@ const partyState = {
       catType: 'ghostWhite',
       catName: 'شبحونة (القطة البيضاء)',
       catBreed: 'أنغورا شبحية ناصعة البياض بعيون خضراء زمردية',
-      item: '🤍🐱',
+      item: 'القطة البيضاء',
       pitch: 1.25,
-      title: 'قطة شبحونة البيضاء 🐾',
-      msg: 'ميااااو~ 🤍 قطة بيضاء شبحية كيوت عيونها خضراء زمردية مضيئة! تحب اللعب والاختفاء، وتهدي هيرو أدفأ وألطف مياو بعيد ميلادها!'
+      title: 'شبحونة (القطة البيضاء)',
+      msg: 'مياو! قطة بيضاء شبحية جميلة بعيون خضراء زمردية، تهدي هيرو أدفأ وألطف الأمنيات بمناسبة عيد ميلادها!'
     },
     {
       id: 2,
@@ -179,10 +179,10 @@ const partyState = {
       catType: 'marmalade',
       catName: 'مشمش (القطة المشمشية)',
       catBreed: 'شيرازية مشمشية مخططة بعيون عنبرية ذهبية',
-      item: '🧡🐱',
+      item: 'القطة المشمشية',
       pitch: 1.0,
-      title: 'قطة مشمش المشمشية 🐾',
-      msg: 'ميااااو~ 🧡 قطة برتقالية مشمشية مخططة مليانة شقاوة وحنان، دخلت الحفلة فرحانة عشان تاكل كيكة وتلعب مع هيرو وتفرّح قلبها!'
+      title: 'مشمش (القطة المشمشية)',
+      msg: 'مياو! قطة برتقالية مشمشية مخططة مليئة بالمرح، تحتفل مع هيرو وتسعد قلبها في يومها المميز!'
     },
     {
       id: 3,
@@ -194,10 +194,10 @@ const partyState = {
       catType: 'midnightGoth',
       catName: 'لونا (قطة الليل الفخمة)',
       catBreed: 'بومباي سوداء قوثك حريرية بعيون ذهبية براقة',
-      item: '🖤🐱',
+      item: 'القطة الليلية',
       pitch: 0.85,
-      title: 'قطة لونا الليلية 🐾',
-      msg: 'ميااااو~ 🖤 قطة سوداء حريرية فخمة تشبه شخصيات داني الشبح، لابسة طوق بنفسجي وجاية تحرس سعادة هيرو وتتمنى لها سنة ولا أحلى!'
+      title: 'لونا (قطة الليل)',
+      msg: 'مياو! قطة سوداء حريرية فخمة مستوحاة من عالم داني الشبح، تتمنى لهيرو أسعد وأجمل الأوقات!'
     },
     {
       id: 4,
@@ -209,10 +209,10 @@ const partyState = {
       catType: 'silverSiamese',
       catName: 'سكر (القطة الفضية السيامية)',
       catBreed: 'سيامية رشيقة بفرو فضي وعيون سماوية',
-      item: '🩶🐱',
+      item: 'القطة الفضية',
       pitch: 1.15,
-      title: 'قطة سكر الفضية 🐾',
-      msg: 'ميااااو~ 🩶 قطة رمادية فضية دلوعة بعيون زرقاء سماوية ساحرة، تتمنى لهيرو أسعد وأحلى عيد ميلاد بالعالم!'
+      title: 'سكر (القطة الفضية)',
+      msg: 'مياو! قطة رمادية فضية أنيقة بعيون سماوية ساحرة، تهدي هيرو أجمل التهاني والأمنيات السعيدة!'
     }
   ],
   confettiCannons: [
@@ -272,7 +272,7 @@ const Net = {
     const cleanCode = targetCode.trim().toUpperCase();
     const targetPeerId = `ghost-cafe-${cleanCode.toLowerCase()}`;
     const statusElem = document.getElementById('join-status');
-    statusElem.innerText = 'جاري الدخول إلى الروم... ⏳';
+    statusElem.innerText = 'جاري الانضمام إلى الغرفة...';
 
     try {
       this.conn = this.peer.connect(targetPeerId);
@@ -281,7 +281,7 @@ const Net = {
       if (state.selectedCharId) state.p2.charId = state.selectedCharId;
 
       this.conn.on('open', () => {
-        statusElem.innerText = 'تم الدخول بنجاح! 🟢 مرحباً بكِ في الكافيه!';
+        statusElem.innerText = 'تم الانضمام بنجاح! مرحباً بكِ في المقهى!';
         state.isHost = false;
         state.p2.name = state.localPlayerName;
         if (state.selectedCharId) state.p2.charId = state.selectedCharId;
@@ -302,13 +302,13 @@ const Net = {
 
     const netBadge = document.getElementById('net-status-badge');
     if (netBadge) {
-      netBadge.innerText = 'أونلاين متصل 🟢';
+      netBadge.innerText = 'متصل';
       netBadge.style.borderColor = '#00ff88';
       netBadge.style.color = '#00ff88';
     }
 
     const hostStatus = document.getElementById('host-status');
-    if (hostStatus) hostStatus.innerText = 'دخلت صاحبتك الروم! جاهزين للبدء 🟢';
+    if (hostStatus) hostStatus.innerText = 'انضمت الصديقة للغرفة! أنتما جاهزتان للبدء';
 
     this.conn.on('data', (data) => {
       this.handleIncomingData(data);
@@ -331,7 +331,7 @@ const Net = {
     this.conn.on('close', () => {
       state.onlineConnected = false;
       const netBadge = document.getElementById('net-status-badge');
-      if (netBadge) netBadge.innerText = 'انقطع الاتصال 🔴';
+      if (netBadge) netBadge.innerText = 'انقطع الاتصال';
     });
   },
 
@@ -398,10 +398,10 @@ const Net = {
       if (!data.lit) {
         sounds.playCandlesBlow();
         spawnSparks(partyState.cake.x, partyState.cake.y - 40, 30, '#ffd700');
-        spawnFloatingText('💨 طفيتو الشموع سوا! كل عام وأنتِ بخير يا هيرو! 🎉', partyState.cake.x, partyState.cake.y - 70, '#00ff88');
+        spawnFloatingText('تم إطفاء الشموع معاً! كل عام وأنتِ بخير يا هيرو!', partyState.cake.x, partyState.cake.y - 70, '#00ff88');
       } else {
         sounds.playInteract();
-        spawnFloatingText('🕯️ تم إشعال الشموع من جديد! تمنوا أمنية ثانية ✨', partyState.cake.x, partyState.cake.y - 70, '#ffd700');
+        spawnFloatingText('تم إشعال الشموع من جديد! تمنيا أمنية سعيدة', partyState.cake.x, partyState.cake.y - 70, '#ffd700');
       }
     } else if (data.type === 'PARTY_GIFT') {
       const g = partyState.gifts.find(x => x.id === data.giftId);
@@ -410,7 +410,7 @@ const Net = {
         sounds.playMeow(g.pitch);
         sounds.playBoxPop();
         spawnSparks(g.x, g.y, 25, g.color);
-        spawnFloatingText('🐾 مياااو!', g.x, g.y - 45, g.color);
+        spawnFloatingText('مياو!', g.x, g.y - 45, g.color);
       }
     } else if (data.type === 'PARTY_DANCE') {
       const targetP = state.isHost ? state.p2 : state.p1;
@@ -418,7 +418,7 @@ const Net = {
     } else if (data.type === 'PARTY_LIGHTS') {
       partyState.partyLights = data.lights;
       sounds.playInteract();
-      spawnFloatingText(data.lights ? '💡 الإضاءة مشعلة!' : '🌙 إضاءة خافتة!', 840, 390, '#00e5ff');
+      spawnFloatingText(data.lights ? 'الإضاءة ساطعة!' : 'إضاءة هادئة', 840, 390, '#00e5ff');
     } else if (data.type === 'PARTY_CONFETTI') {
       triggerPartyConfetti(data.x, data.y, false);
     }
@@ -587,12 +587,12 @@ function handlePlayerAction(player) {
         partyState.candlesLit = false;
         sounds.playCandlesBlow();
         spawnSparks(partyState.cake.x, partyState.cake.y - 45, 35, '#ffd700');
-        spawnFloatingText('💨 ففففف! طفيتي الشموع! كل عام وأنتِ بخير يا هيرو! 🎉', partyState.cake.x, partyState.cake.y - 75, '#00ff88');
+        spawnFloatingText('تم إطفاء الشموع! كل عام وأنتِ بخير يا هيرو!', partyState.cake.x, partyState.cake.y - 75, '#00ff88');
         triggerPartyConfetti(partyState.cake.x, partyState.cake.y, true);
       } else {
         partyState.candlesLit = true;
         sounds.playInteract();
-        spawnFloatingText('🕯️ تم إشعال الشموع من جديد! تمنوا أمنية ثانية ✨', partyState.cake.x, partyState.cake.y - 75, '#ffd700');
+        spawnFloatingText('تم إشعال الشموع من جديد! تمنيا أمنية سعيدة', partyState.cake.x, partyState.cake.y - 75, '#ffd700');
       }
       if (state.mode === 'online' && Net.conn) {
         Net.send({ type: 'PARTY_CANDLES', lit: partyState.candlesLit });
@@ -610,7 +610,7 @@ function handlePlayerAction(player) {
       if (!wasOpened) {
         triggerPartyConfetti(nearGift.x, nearGift.y, false);
       }
-      spawnFloatingText('🐾 مياااو!', nearGift.x, nearGift.y - 45, nearGift.color);
+      spawnFloatingText('مياو!', nearGift.x, nearGift.y - 45, nearGift.color);
       if (state.mode === 'online' && Net.conn) {
         Net.send({ type: 'PARTY_GIFT', giftId: nearGift.id });
       }
@@ -631,7 +631,7 @@ function handlePlayerAction(player) {
     if (Math.hypot(player.x - partyState.djBooth.x, player.y - partyState.djBooth.y) < 60) {
       partyState.partyLights = !partyState.partyLights;
       sounds.playInteract();
-      spawnFloatingText(partyState.partyLights ? '💡 الإضاءة مشعلة!' : '🌙 إضاءة الحفلة خافتة!', 840, 390, '#00e5ff');
+      spawnFloatingText(partyState.partyLights ? 'الإضاءة ساطعة!' : 'إضاءة هادئة', 840, 390, '#00e5ff');
       if (state.mode === 'online' && Net.conn) {
         Net.send({ type: 'PARTY_LIGHTS', lights: partyState.partyLights });
       }
@@ -650,11 +650,11 @@ function handlePlayerAction(player) {
     if (nearStation.id === 'trash') {
       if (player.heldItems.length > 0) {
         sounds.playBoxPop();
-        spawnFloatingText('تم تفريغ يديك! 🗑️', nearStation.x, nearStation.y - 15, '#ff4444');
+        spawnFloatingText('تم تفريغ يديك بنجاح', nearStation.x, nearStation.y - 15, '#ff4444');
         player.heldItems = [];
         updateInventoryHUD();
       } else {
-        spawnFloatingText('يدك فاضية أصلاً!', nearStation.x, nearStation.y - 15, '#999');
+        spawnFloatingText('اليدان فارغتان بالفعل', nearStation.x, nearStation.y - 15, '#999');
       }
       return;
     }
@@ -666,7 +666,7 @@ function handlePlayerAction(player) {
       nearStation.progress = 0;
       sounds.playBubbles();
       spawnSparks(nearStation.x, nearStation.y - 10, 8, '#00ff88');
-      spawnFloatingText('بدأ التحضير! ⏳', nearStation.x, nearStation.y - 20, '#00ff88');
+      spawnFloatingText('بدأ التحضير...', nearStation.x, nearStation.y - 20, '#00ff88');
       return;
     }
 
@@ -684,14 +684,14 @@ function handlePlayerAction(player) {
       } else {
         // Hands full (3/3)
         sounds.playBoxPop();
-        spawnFloatingText('يدك مليانة! (3/3) سلمي الطلبات أول ⚠️', nearStation.x, nearStation.y - 20, '#ffcc00');
+        spawnFloatingText('اليدان ممتلئتان (3/3)! سلّمي الطلبات أولاً', nearStation.x, nearStation.y - 20, '#ffcc00');
       }
       return;
     }
 
     // Case C: Machine is still in progress
     if (nearStation.busy && nearStation.progress < nearStation.cookTime) {
-      spawnFloatingText('لسه ما جهز! ⏳', nearStation.x, nearStation.y - 20, '#ffcc00');
+      spawnFloatingText('الطلب قيد التحضير...', nearStation.x, nearStation.y - 20, '#ffcc00');
       return;
     }
   }
@@ -701,7 +701,7 @@ function handlePlayerAction(player) {
 
   if (nearTable && nearTable.customer) {
     if (player.heldItems.length === 0) {
-      spawnFloatingText('يدك فاضية! جيبي الطلب أول', nearTable.x, nearTable.y - 35, '#aaa');
+      spawnFloatingText('اليدان فارغتان! أحضري الطلب أولاً', nearTable.x, nearTable.y - 35, '#aaa');
       return;
     }
 
@@ -733,7 +733,7 @@ function handlePlayerAction(player) {
         let tip = (cust.patience / cust.maxPatience > 0.4) ? 30 : 0;
         state.coins += (baseReward + tip);
 
-        spawnFloatingText(`+${baseReward + tip} 🪙 وجبة كاملة! كفو`, nearTable.x, nearTable.y - 45, '#ffd700');
+        spawnFloatingText(`+${baseReward + tip} عملة! تم تسليم الطلب بنجاح`, nearTable.x, nearTable.y - 45, '#ffd700');
         spawnSparks(nearTable.x, nearTable.y - 20, 25, '#39ff14');
 
         nearTable.customer = null;
@@ -743,7 +743,7 @@ function handlePlayerAction(player) {
         const remaining = cust.orderItems.length - cust.deliveredItems.length;
         // Give customer a patience refill bonus since they received part of their food!
         cust.patience = Math.min(cust.maxPatience, cust.patience + 900);
-        spawnFloatingText(`سلمتِ جزء! باقي ${remaining} ✓`, nearTable.x, nearTable.y - 35, '#00ff88');
+        spawnFloatingText(`تم تسليم جزء! المتبقي: ${remaining}`, nearTable.x, nearTable.y - 35, '#00ff88');
       }
     } else {
       // Wrong item delivered: Customer takes it and deducts points!
@@ -757,11 +757,11 @@ function handlePlayerAction(player) {
 
       // Customer loses patience when receiving wrong food
       cust.patience -= 450;
-      spawnFloatingText(`-${penalty} 🪙 طلب غلط!`, nearTable.x, nearTable.y - 45, '#ff3333');
+      spawnFloatingText(`-${penalty} عملة (طلب غير مطابق)`, nearTable.x, nearTable.y - 45, '#ff3333');
       spawnSparks(nearTable.x, nearTable.y - 20, 15, '#ff3333');
 
       if (cust.patience <= 0) {
-        spawnFloatingText('الزبون مشى زعلان! 💨', nearTable.x, nearTable.y - 40, '#ff3333');
+        spawnFloatingText('غادر الزبون لنفاد الصبر!', nearTable.x, nearTable.y - 40, '#ff3333');
         nearTable.customer = null;
       }
     }
@@ -774,21 +774,21 @@ function updateInventoryHUD() {
   const items = activeLocalPlayer.heldItems;
 
   const itemData = {
-    burger: { emoji: '🍔', name: 'برجر' },
-    shake: { emoji: '🥤', name: 'عصير' },
-    fries: { emoji: '🍟', name: 'بطاطس' },
-    tea: { emoji: '🍵', name: 'شاي' },
-    cupcake: { emoji: '🎂', name: 'كيكة' }
+    burger: { name: 'برجر' },
+    shake: { name: 'عصير' },
+    fries: { name: 'بطاطس' },
+    tea: { name: 'شاي' },
+    cupcake: { name: 'كعكة' }
   };
 
   // 1. Bottom footer text
   const invElem = document.getElementById('hud-inventory-text');
   if (invElem) {
     if (items.length === 0) {
-      invElem.innerText = 'فاضية (0/3)';
+      invElem.innerText = 'فارغة (0/3)';
       invElem.style.color = '#98a5b8';
     } else {
-      const names = items.map(k => (itemData[k] ? `${itemData[k].emoji} ${itemData[k].name}` : k)).join(' + ');
+      const names = items.map(k => (itemData[k] ? itemData[k].name : k)).join(' + ');
       invElem.innerText = `${names} (${items.length}/3)`;
       invElem.style.color = (items.length >= 3) ? '#ffd700' : '#00ff88';
     }
@@ -809,13 +809,13 @@ function updateInventoryHUD() {
     }
 
     if (items.length === 0) {
-      chipsContainer.innerHTML = '<span class="empty-chip">يدك فاضية</span>';
+      chipsContainer.innerHTML = '<span class="empty-chip">اليدان فارغتان</span>';
       if (pill) pill.classList.remove('has-items');
     } else {
       if (pill) pill.classList.add('has-items');
       chipsContainer.innerHTML = items.map(k => {
-        const info = itemData[k] || { emoji: '📦', name: k };
-        return `<span class="held-chip ${k}"><span class="chip-icon">${info.emoji}</span><span class="chip-text">${info.name}</span></span>`;
+        const info = itemData[k] || { name: k };
+        return `<span class="held-chip ${k}"><span class="chip-text">${info.name}</span></span>`;
       }).join('');
     }
   }
@@ -824,13 +824,13 @@ function updateInventoryHUD() {
   const touchActionBtn = document.querySelector('.t-action-btn span:nth-child(2)');
   if (touchActionBtn) {
     if (items.length === 0) {
-      touchActionBtn.innerText = 'تشغيل / أخذ';
+      touchActionBtn.innerText = 'تشغيل / التقاط';
     } else if (items.length < 3) {
       const last = items[items.length - 1];
-      const emoji = (itemData[last] && itemData[last].emoji) || '🍽️';
-      touchActionBtn.innerText = `تقديم ${emoji} / تشغيل`;
+      const name = (itemData[last] && itemData[last].name) || 'الطلب';
+      touchActionBtn.innerText = `تقديم (${name}) / تشغيل`;
     } else {
-      touchActionBtn.innerText = 'تقديم الطلبات 🍽️';
+      touchActionBtn.innerText = 'تقديم الطلبات';
     }
   }
 }
@@ -846,7 +846,7 @@ function updateCustomers() {
       if (s.progress >= s.cookTime) {
         sounds.playInteract();
         spawnSparks(s.x, s.y - 40, 16, '#00ff88');
-        spawnFloatingText('جاهز! ✨', s.x, s.y - 55, '#00ff88');
+        spawnFloatingText('جاهز للتقديم!', s.x, s.y - 55, '#00ff88');
       }
     }
   });
@@ -895,7 +895,7 @@ function updateCustomers() {
       tbl.customer.patience--;
       if (tbl.customer.patience <= 0) {
         sounds.playBoxPop();
-        spawnFloatingText('الزبون طفش ومشى! 💨', tbl.x, tbl.y - 40, '#ff3333');
+        spawnFloatingText('غادر الزبون لنفاد الصبر!', tbl.x, tbl.y - 40, '#ff3333');
         tbl.customer = null;
       }
     }
@@ -1020,23 +1020,15 @@ function endLevel(won) {
       localStorage.setItem('hiro_party_unlocked', 'true');
       updatePartyMenuButton();
       const modal = document.getElementById('birthday-bash-modal');
-      const customText = document.getElementById('bday-modal-custom-text');
-      if (customText) {
-        if (state.mode === 'online') {
-          customText.innerText = 'كفو عليكم يا بطلات! أبدعتوا وخلصتوا جميع المراحل سوا بتعاون أسطوري! 🏆 الحين حان وقت الحفلة والمفاجأة الكبرى!';
-        } else {
-          customText.innerText = 'كفو عليكِ يا هيرو! أبدعتِ وخلصتِ جميع مراحل الكافيه بجدارة! 🏆 الحين حان وقت الحفلة والمفاجأة الكبرى!';
-        }
-      }
       modal.classList.remove('hidden');
     } else {
       const modal = document.getElementById('level-win-modal');
-      document.getElementById('win-coins').innerText = `${state.coins} 🪙`;
+      document.getElementById('win-coins').innerText = `${state.coins}`;
 
       const winNotice = document.getElementById('win-next-notice');
       if (winNotice) {
         if (unlockedNew) {
-          winNotice.innerText = `🔓 كفو! تم فتح المرحلة ${nextLvlIndex + 1}!`;
+          winNotice.innerText = `خلصتي المرحلة! تم فتح المرحلة ${nextLvlIndex + 1}!`;
           winNotice.classList.remove('hidden');
         } else {
           winNotice.classList.add('hidden');
@@ -1067,11 +1059,11 @@ function updatePartyMenuButton() {
   if (!btn) return;
   if (state.partyUnlocked) {
     btn.classList.remove('locked');
-    btn.innerText = '🎂 غرفة الاحتفال والرقص 🎉';
+    btn.innerText = 'غرفة الاحتفال والرقص';
     btn.title = 'دخول غرفة الاحتفال والرقص!';
   } else {
     btn.classList.add('locked');
-    btn.innerText = '🔒 غرفة الاحتفال (مقفلة)';
+    btn.innerText = 'غرفة الاحتفال (مقفلة)';
     btn.title = 'تفتح فقط بعد إكمال جميع المراحل الـ 4!';
   }
 }
@@ -1079,7 +1071,7 @@ function updatePartyMenuButton() {
 function enterPartyRoom(notifyRemote = true) {
   if (!state.partyUnlocked) {
     sounds.playBoxPop();
-    showNotice('⚠️ غرفة الاحتفال مقفلة! لازم تخلصون كل المراحل الـ 4 أولاً عشان تفتح لكم الحفلة 🎂🎉');
+    showNotice('غرفة الاحتفال مقفلة! يجب إكمال جميع المراحل الـ 4 أولاً لفتح قاعة الاحتفال.');
     return;
   }
   state.scene = 'party';
@@ -1112,7 +1104,7 @@ function enterPartyRoom(notifyRemote = true) {
   sounds.playCelebrationFanfare();
   sounds.startPartyBGM();
 
-  spawnFloatingText('🎉 أهلاً بكم في حفلة ميلاد هيرو الأسطورية! 🎂', 480, 160, '#00ff88');
+  spawnFloatingText('أهلاً بكم في حفلة ميلاد هيرو الكبرى!', 480, 160, '#00ff88');
   triggerPartyConfetti(480, 220, false);
   triggerPartyConfetti(200, 200, false);
   triggerPartyConfetti(760, 200, false);
@@ -1145,13 +1137,13 @@ function toggleDance(player) {
   player.dancing = !player.dancing;
   if (player.dancing) {
     sounds.playInteract();
-    spawnFloatingText('💃 يلا نرقص! 🎵', player.x, player.y - 35, '#00ff88');
-    const notes = ['🎵', '🎶', '✨', '💚'];
+    spawnFloatingText('حان وقت الاحتفال والرقص!', player.x, player.y - 35, '#00ff88');
+    const notes = ['♪', '♫', '✦', '★'];
     for (let i = 0; i < 5; i++) {
       spawnFloatingText(notes[i % notes.length], player.x + (Math.random() * 40 - 20), player.y - 45 - Math.random() * 20, '#ffd700');
     }
   } else {
-    spawnFloatingText('وقفت الرقص ✋', player.x, player.y - 35, '#aaa');
+    spawnFloatingText('توقف الرقص', player.x, player.y - 35, '#aaa');
   }
   if (state.mode === 'online' && Net.conn) {
     Net.send({ type: 'PARTY_DANCE', dancing: player.dancing });
@@ -1177,10 +1169,10 @@ function triggerPartyConfetti(x, y, playSfx = true) {
 }
 
 function updatePartyHUD() {
-  document.getElementById('hud-timer').innerText = '🎉 حفلة';
-  document.getElementById('hud-level-title').innerText = 'قاعة الاحتفال 🎂';
-  document.getElementById('hud-coins').innerText = '9999 🪙';
-  document.getElementById('target-count').innerText = 'عيد ميلاد هيرو السعيد! 💚';
+  document.getElementById('hud-timer').innerText = 'حفلة';
+  document.getElementById('hud-level-title').innerText = 'قاعة الاحتفال';
+  document.getElementById('hud-coins').innerText = '9999';
+  document.getElementById('target-count').innerText = 'عيد ميلاد هيرو السعيد!';
 
   // Floating inventory pill: change to dance prompt in party room
   const pill = document.getElementById('floating-inventory-pill');
@@ -1188,16 +1180,16 @@ function updatePartyHUD() {
     pill.classList.add('has-items');
     const capBadge = document.getElementById('inv-capacity-badge');
     const chipsContainer = document.getElementById('floating-items-chips');
-    if (capBadge) capBadge.innerText = '💃';
+    if (capBadge) capBadge.innerText = 'حفلة';
     if (chipsContainer) {
-      chipsContainer.innerHTML = '<span class="held-chip cupcake"><span class="chip-icon">🎂</span> ارقصي واحتفلي!</span>';
+      chipsContainer.innerHTML = '<span class="held-chip cupcake"><span class="chip-text">ارقصي واحتفلي!</span></span>';
     }
   }
 
   // Update touch buttons
   const touchActionBtn = document.querySelector('.t-action-btn span:nth-child(2)');
   if (touchActionBtn) {
-    touchActionBtn.innerText = 'تفاعل ⚡';
+    touchActionBtn.innerText = 'تفاعل';
   }
 
   const touchDanceBtn = document.getElementById('btn-touch-dance');
@@ -1368,11 +1360,11 @@ function renderLevelCards() {
 
     let statusHtml = '';
     if (!isUnlocked) {
-      statusHtml = `<div class="lvl-status locked-tag">🔒 مقفلة</div>`;
+      statusHtml = `<div class="lvl-status locked-tag">مقفلة</div>`;
     } else if (idx < state.maxUnlockedLevel) {
-      statusHtml = `<div class="lvl-status done-tag">✓ مكتملة</div>`;
+      statusHtml = `<div class="lvl-status done-tag">مكتملة</div>`;
     } else {
-      statusHtml = `<div class="lvl-status current-tag">▶ جاهزة للعب</div>`;
+      statusHtml = `<div class="lvl-status current-tag">جاهزة للبدء</div>`;
     }
 
     card.innerHTML = `
@@ -1386,7 +1378,7 @@ function renderLevelCards() {
         sounds.playBoxPop();
         card.classList.add('shake-anim');
         setTimeout(() => card.classList.remove('shake-anim'), 400);
-        showNotice(`⚠️ المرحلة ${lvl.id} مقفلة! لازم تختمين المرحلة ${lvl.id - 1} أولاً.`);
+        showNotice(`المرحلة ${lvl.id} مقفلة! يجب إكمال المرحلة ${lvl.id - 1} أولاً.`);
         return;
       }
 
@@ -1433,19 +1425,19 @@ function setupUI() {
     const isRot = document.body.classList.contains('force-landscape-mode');
     const btnHud = document.getElementById('btn-toggle-rotate');
     const btnQuick = document.getElementById('btn-quick-rotate');
-    if (btnHud) btnHud.innerText = isRot ? '📱' : '⛶';
-    if (btnQuick) btnQuick.innerText = isRot ? '📱 العودة للوضع العادي' : '⛶ تكبير الشاشة بالعرض (وضع ملء الشاشة)';
+    if (btnHud) btnHud.innerHTML = isRot ? '<svg viewBox="0 0 24 24" class="ui-icon" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>' : '<svg viewBox="0 0 24 24" class="ui-icon" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
+    if (btnQuick) btnQuick.innerText = isRot ? 'العودة للوضع الرأسي' : 'تكبير الشاشة بالعرض (وضع ملء الشاشة)';
 
     if (isRot) {
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
       }
-      showNotice('⛶ تم تكبير الشاشة بالعرض! أمسكي الجوال بالعرض لتجربة ضخمة وواضحة! 🎮');
+      showNotice('تم تكبير الشاشة بالعرض لتجربة أوضح وأكبر');
     } else {
       if (document.exitFullscreen && document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
-      showNotice('📱 تم الرجوع للوضع الرأسي');
+      showNotice('تم الرجوع للوضع الرأسي');
     }
   };
 
@@ -1504,8 +1496,8 @@ function setupUI() {
   document.getElementById('btn-copy-code').addEventListener('click', () => {
     navigator.clipboard.writeText(Net.myCode);
     const btn = document.getElementById('btn-copy-code');
-    btn.innerText = 'تم النسخ! ✓';
-    setTimeout(() => { btn.innerText = 'نسخ الكود 📋'; }, 2000);
+    btn.innerText = 'تم النسخ بنجاح';
+    setTimeout(() => { btn.innerText = 'نسخ الرمز'; }, 2000);
   });
 
   // Join Room by Code Button
@@ -1607,10 +1599,10 @@ function setupUI() {
       if (!partyState.candlesLit) {
         sounds.playCandlesBlow();
         triggerPartyConfetti(partyState.cake.x, partyState.cake.y, false);
-        spawnFloatingText('💨 طفيتو الشموع! سنة حلوة يا هيرو! 🎉', partyState.cake.x, partyState.cake.y - 70, '#00ff88');
+        spawnFloatingText('تم إطفاء الشموع! كل عام وأنتِ بخير يا هيرو!', partyState.cake.x, partyState.cake.y - 70, '#00ff88');
       } else {
         sounds.playInteract();
-        spawnFloatingText('🕯️ تم إشعال الشموع من جديد! ✨', partyState.cake.x, partyState.cake.y - 70, '#ffd700');
+        spawnFloatingText('تم إشعال الشموع من جديد!', partyState.cake.x, partyState.cake.y - 70, '#ffd700');
       }
       if (state.mode === 'online' && Net.conn) {
         Net.send({ type: 'PARTY_CANDLES', lit: partyState.candlesLit });
@@ -1635,7 +1627,7 @@ function setupUI() {
     btnPartyLights.addEventListener('click', () => {
       partyState.partyLights = !partyState.partyLights;
       sounds.playInteract();
-      spawnFloatingText(partyState.partyLights ? '💡 الإضاءة مشعلة!' : '🌙 إضاءة الحفلة خافتة!', 480, 200, '#00e5ff');
+      spawnFloatingText(partyState.partyLights ? 'الإضاءة ساطعة!' : 'إضاءة هادئة', 480, 200, '#00e5ff');
       if (state.mode === 'online' && Net.conn) {
         Net.send({ type: 'PARTY_LIGHTS', lights: partyState.partyLights });
       }
@@ -1686,7 +1678,7 @@ function setupUI() {
       updateHUD();
       closeResetModal();
       sounds.playBoxPop();
-      showNotice('✓ تم تصفير اللعبة وإعادة قفل المراحل بنجاح!');
+      showNotice('تمت إعادة ضبط تقدم المراحل بنجاح');
     } else {
       // Incorrect password!
       sounds.playBoxPop();
@@ -1709,13 +1701,13 @@ function setupUI() {
   const btnSound = document.getElementById('btn-sound');
   btnSound.addEventListener('click', () => {
     const unmuted = sounds.toggleMute();
-    btnSound.innerText = unmuted ? '🔊' : '🔇';
+    btnSound.innerHTML = unmuted ? '<svg viewBox="0 0 24 24" class="ui-icon" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.08"/></svg>' : '<svg viewBox="0 0 24 24" class="ui-icon" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>';
   });
 
   const btnPause = document.getElementById('btn-pause');
   btnPause.addEventListener('click', () => {
     state.isPaused = !state.isPaused;
-    btnPause.innerText = state.isPaused ? '▶️' : '⏸️';
+    btnPause.innerHTML = state.isPaused ? '<svg viewBox="0 0 24 24" class="ui-icon" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>' : '<svg viewBox="0 0 24 24" class="ui-icon" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
   });
 }
 

@@ -21,11 +21,11 @@
           <span id="hud-timer" class="hud-val">02:20</span>
         </div>
         <div class="hud-box level-box">
-          <span class="hud-star">⭐</span>
+          <svg class="ui-icon icon-star" viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="#ffd700"/></svg>
           <span id="hud-level-title" class="hud-val">المرحلة 1</span>
         </div>
         <div class="hud-box coins-box">
-          <span class="coin-icon">🪙</span>
+          <svg class="ui-icon icon-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#ffd700" stroke="#b8860b" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="#b8860b" stroke-width="1.2"/></svg>
           <span id="hud-coins" class="hud-val">0</span>
         </div>
       </div>
@@ -39,9 +39,15 @@
 
       <div class="hud-right">
         <span id="net-status-badge" class="mode-badge">لعب فردي</span>
-        <button id="btn-toggle-rotate" class="hud-btn rotate-btn" title="تكبير الشاشة بالعرض">⛶</button>
-        <button id="btn-sound" class="hud-btn" title="كتم/تشغيل الصوت">🔊</button>
-        <button id="btn-pause" class="hud-btn" title="إيقاف مؤقت">⏸️</button>
+        <button id="btn-toggle-rotate" class="hud-btn rotate-btn" title="تكبير الشاشة بالعرض">
+          <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+        <button id="btn-sound" class="hud-btn" title="كتم/تشغيل الصوت">
+          <svg class="ui-icon" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button id="btn-pause" class="hud-btn" title="إيقاف مؤقت">
+          <svg class="ui-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg>
+        </button>
       </div>
     </header>
 
@@ -52,11 +58,11 @@
         <!-- Prominent Floating Held Items Inventory Pill -->
         <div id="floating-inventory-pill" class="floating-inventory-pill">
           <div class="inv-pill-title">
-            <span class="inv-hand-icon">🤲 بيدك:</span>
+            <span class="inv-hand-icon">بيدك:</span>
             <span id="inv-capacity-badge" class="inv-cap-badge">(0/3)</span>
           </div>
           <div id="floating-items-chips" class="floating-items-chips">
-            <span class="empty-chip">يدك فاضية</span>
+            <span class="empty-chip">فارغة</span>
           </div>
         </div>
       </div>
@@ -71,41 +77,41 @@
           <span class="key-hint">Space للتشغيل والأخذ والتقديم</span>
         </div>
         <div class="inventory-badge">
-          <span>بيدك: </span>
+          <span>الحمل: </span>
           <span id="hud-inventory-text">فارغة (0/3)</span>
         </div>
       </div>
       <div class="footer-actions">
-        <button id="btn-how-to-play" class="footer-btn">طريقة اللعب 📖</button>
-        <button id="btn-restart-level" class="footer-btn">إعادة المرحلة 🔄</button>
-        <button id="btn-levels-menu" class="footer-btn">القائمة الرئيسية 📋</button>
+        <button id="btn-how-to-play" class="footer-btn">طريقة اللعب</button>
+        <button id="btn-restart-level" class="footer-btn">إعادة المرحلة</button>
+        <button id="btn-levels-menu" class="footer-btn">القائمة الرئيسية</button>
       </div>
       <!-- Party Room HUD Action Bar -->
       <div id="party-hud-actions" class="party-hud-actions hidden">
-        <button id="btn-party-dance-footer" class="footer-btn dance-btn">💃 ارقصي / Dance</button>
-        <button id="btn-party-candle-footer" class="footer-btn candle-btn">💨 إطفاء الشموع</button>
-        <button id="btn-party-confetti-footer" class="footer-btn confetti-btn">🎉 مفرقعات</button>
-        <button id="btn-party-lights-footer" class="footer-btn lights-btn">💡 الإضاءة</button>
-        <button id="btn-party-leave" class="footer-btn">📋 العودة للكافيه</button>
+        <button id="btn-party-dance-footer" class="footer-btn dance-btn">الرقص</button>
+        <button id="btn-party-candle-footer" class="footer-btn candle-btn">إطفاء الشموع</button>
+        <button id="btn-party-confetti-footer" class="footer-btn confetti-btn">مفرقعات</button>
+        <button id="btn-party-lights-footer" class="footer-btn lights-btn">الإضاءة</button>
+        <button id="btn-party-leave" class="footer-btn">العودة للكافيه</button>
       </div>
     </footer>
 
     <!-- Mobile Touch Controls Deck -->
     <div id="touch-controls">
       <div id="mobile-rotate-banner" class="mobile-rotate-banner">
-        <button id="btn-quick-rotate" class="rotate-cta-btn">⛶ تكبير الشاشة بالعرض (وضع ملء الشاشة)</button>
-        <button id="btn-dismiss-rotate" class="rotate-dismiss-btn" title="إخفاء">✕</button>
+        <button id="btn-quick-rotate" class="rotate-cta-btn">تكبير الشاشة بالعرض (ملء الشاشة)</button>
+        <button id="btn-dismiss-rotate" class="rotate-dismiss-btn" title="إغلاق">✕</button>
       </div>
 
       <div class="touch-controls-row">
         <div class="touch-actions">
           <button class="t-action-btn" data-key="Space">
-            <span class="t-action-icon">⚡</span>
-            <span class="t-action-label">فعل / خذ</span>
+            <span class="t-action-icon"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor"/></svg></span>
+            <span class="t-action-label">تفاعل / أخذ</span>
           </button>
-          <button id="btn-touch-dance" class="t-action-btn t-dance-btn hidden" title="ارقصي">
-            <span class="t-action-icon">💃</span>
-            <span class="t-action-label">ارقصي</span>
+          <button id="btn-touch-dance" class="t-action-btn t-dance-btn hidden" title="الرقص">
+            <span class="t-action-icon"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg></span>
+            <span class="t-action-label">رقص</span>
           </button>
         </div>
 
@@ -125,68 +131,84 @@
     <div id="tutorial-modal" class="modal-overlay hidden">
       <div class="menu-card tutorial-card">
         <button id="btn-close-tut-x" class="close-x-btn" title="إغلاق">✕</button>
-        <div class="menu-hero-badge">📖 ☕</div>
+        <div class="hero-icon-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"/><path d="M6 3v14"/></svg>
+        </div>
         <h2 class="game-main-title" style="font-size: 1.8rem;">طريقة اللعب</h2>
-        <p class="game-sub-title">كل اللي تحتاجين تعرفينه لإدارة الكافيه!</p>
+        <p class="game-sub-title">دليل إدارة الكافيه وخدمة الزبائن</p>
 
         <div class="tutorial-grid">
           <div class="tut-step">
-            <div class="tut-icon">🏃‍♀️</div>
+            <div class="tut-icon">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3"/></svg>
+            </div>
             <div class="tut-info">
               <h4>1. الحركة</h4>
-              <p>تحركي بأزرار <strong>WASD</strong> أو <strong>الأسهم</strong> على الكيبورد (أو أزرار الشاشة لو تلعبين من الجوال).</p>
+              <p>تحركي باستخدام أزرار <strong>WASD</strong> أو <strong>الأسهم</strong> على لوحة المفاتيح، أو أزرار التوجيه على شاشة الجوال.</p>
             </div>
           </div>
 
           <div class="tut-step">
-            <div class="tut-icon">🍳</div>
+            <div class="tut-icon">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            </div>
             <div class="tut-info">
-              <h4>2. تشغيل الأجهزة</h4>
-              <p>وقفي عند أي جهاز واضغطي <strong>Space (مسافة)</strong> لتشغيله. حتى لو يدك فيها طلبات، يمديك تشغلين جهاز ثاني بدون مشكلة!</p>
+              <h4>2. تشغيل محطات التحضير</h4>
+              <p>قفي بجانب أي جهاز واضغطي <strong>مسافة (Space)</strong> لبدء التحضير. يمكنك تشغيل الأجهزة حتى لو كانت يداك تحملان طلبات أخرى.</p>
             </div>
           </div>
 
           <div class="tut-step">
-            <div class="tut-icon">📥</div>
+            <div class="tut-icon">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="12" y1="9" x2="12" y2="15"/><polyline points="9 12 12 15 15 12"/></svg>
+            </div>
             <div class="tut-info">
-              <h4>3. استلام الطلبات (حتى 3 طلبات بيدك)</h4>
-              <p>لما يخلص الجهاز طبخ، اضغطي <strong>Space</strong> لأخذ الطلب. يمديك تشيلين <strong>لحد 3 طلبات مع بعض بيدك</strong> قبل ما تروحين تسلمينها!</p>
+              <h4>3. استلام الطلبات (حتى 3 أصناف)</h4>
+              <p>عند اكتمال تحضير الصنف، اضغطي <strong>مسافة</strong> لأخذه. يمكنك حمل حتى <strong>3 أصناف معاً</strong> قبل التوجه لطاولات الزبائن.</p>
             </div>
           </div>
 
           <div class="tut-step">
-            <div class="tut-icon">🍽️</div>
+            <div class="tut-icon">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
+            </div>
             <div class="tut-info">
-              <h4>4. التقديم للزبائن (وجبات مجمعة)</h4>
-              <p>روحي لطاولة الزبون واضغطي <strong>Space</strong> لتسليمه. لو الزبون طالب أكثر من طلب مع بعض، سلميه الطلبات حبة حبة لين تكتمل وجبته وتكسبين الفلوس والإكرامية! <strong>(انتبهي: لو سلمتِ طلب غلط، بياخذه وينقص من نقاطك 25 قرش!)</strong></p>
+              <h4>4. تقديم الطلبات للزبائن</h4>
+              <p>توجهي لطاولة الزبون واضغطي <strong>مسافة</strong> لتقديم الصنف المطلوب. تكتمل الوجبة عند تقديم جميع الأصناف لتحصلي على المكافأة والإكرامية. <strong>(تنبيه: تقديم صنف غير مطلوب يخصم 25 عملة من رصيدك!)</strong></p>
             </div>
           </div>
 
           <div class="tut-step">
-            <div class="tut-icon">🌐</div>
+            <div class="tut-icon">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+            </div>
             <div class="tut-info">
-              <h4>5. اللعب أونلاين مع صاحبتك</h4>
-              <p>أنشئي روم وانسخي الكود وأرسليه لصاحبتك عشان تدخل تلعب معك في نفس الكافيه وتوزعون الشغل بينكم.</p>
+              <h4>5. اللعب الجماعي أونلاين</h4>
+              <p>أنشئي غرفة وشاركي الرمز مع الطرف الآخر للعب معاً في نفس الكافيه وتقاسم مهام التحضير والتقديم.</p>
             </div>
           </div>
 
           <div class="tut-step">
-            <div class="tut-icon">🗑️</div>
+            <div class="tut-icon">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6m4-6v6"/></svg>
+            </div>
             <div class="tut-info">
-              <h4>6. سلة الزبالة</h4>
-              <p>لو شلتي طلب زيادة أو بالغلط، وقفي عند سلة الزبالة واضغطي Space لتفريغ يدك فوراً.</p>
+              <h4>6. سلة المهملات</h4>
+              <p>إذا حملتِ صنفاً بالخطأ أو أردتِ إخلاء يديك، قفي عند سلة المهملات واضغطي مسافة لتفريغ اليدين فوراً.</p>
             </div>
           </div>
         </div>
 
-        <button id="btn-close-tutorial" class="main-cta-btn" style="margin-top: 16px;">فهمت، يالله نبدأ! 🚀</button>
+        <button id="btn-close-tutorial" class="main-cta-btn" style="margin-top: 16px;">فهمت، لنبدأ الآن!</button>
       </div>
     </div>
 
     <!-- 2. MAIN MENU MODAL -->
     <div id="menu-overlay" class="modal-overlay">
       <div class="menu-card">
-        <div class="menu-hero-badge">👻 ☕</div>
+        <div class="hero-icon-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        </div>
         <h1 class="game-main-title">مقهى الأشباح</h1>
         <p class="game-sub-title">HIRO'S GHOST ZONE CAFE</p>
         
@@ -195,14 +217,14 @@
           <h3>اختاري نمط اللعب:</h3>
           <div class="mode-options">
             <button class="mode-btn active" data-mode="solo">
-              <span class="mode-icon">👤</span>
-              <span class="mode-name">لعب لوحدي</span>
-              <small>تلعبين بشخصية هيرو لوحدك</small>
+              <span class="mode-icon"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
+              <span class="mode-name">لعب فردي</span>
+              <small>خوض المراحل بشكل فردي</small>
             </button>
             <button class="mode-btn" data-mode="online">
-              <span class="mode-icon">🌐</span>
-              <span class="mode-name">لعب أونلاين بكود</span>
-              <small>تلعبين مع صاحبتك عن طريق كود الروم</small>
+              <span class="mode-icon"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><ellipse cx="12" cy="12" rx="4" ry="9" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2"/></svg></span>
+              <span class="mode-name">لعب جماعي (أونلاين)</span>
+              <small>مشاركة اللعب مع صديقة عبر رمز الغرفة</small>
             </button>
           </div>
         </div>
@@ -210,41 +232,41 @@
         <!-- Online Room Code Sub-Panel -->
         <div id="online-lobby-panel" class="online-box hidden">
           <div class="online-tabs">
-            <button id="tab-host" class="online-tab active">إنشاء روم (Host)</button>
-            <button id="tab-join" class="online-tab">دخول بكود (Join)</button>
+            <button id="tab-host" class="online-tab active">إنشاء غرفة</button>
+            <button id="tab-join" class="online-tab">الانضمام لغرفة</button>
           </div>
 
           <!-- Host View -->
           <div id="host-view" class="online-subview">
-            <p>كود الروم حقك (أرسليه لصاحبتك عشان تدخل معك):</p>
+            <p>رمز غرفتك (شاركيه للانضمام معك):</p>
             <div class="code-display-box">
               <span id="my-room-code" class="room-code-text">جاري التجهيز...</span>
-              <button id="btn-copy-code" class="copy-btn">نسخ الكود 📋</button>
+              <button id="btn-copy-code" class="copy-btn">نسخ الرمز</button>
             </div>
-            <div id="host-status" class="online-status">بانتظار دخول صاحبتك... ⏳</div>
+            <div id="host-status" class="online-status">بانتظار انضمام اللاعب الآخر...</div>
           </div>
 
           <!-- Join View -->
           <div id="join-view" class="online-subview hidden">
-            <p>حطي كود الروم اللي أرسلته لك صاحبتك:</p>
+            <p>أدخلي رمز الغرفة للمشاركة:</p>
             <div class="code-input-row">
               <input type="text" id="input-room-code" placeholder="مثال: HIRO-489" maxlength="15">
-              <button id="btn-join-room" class="secondary-btn">دخول الروم ⚡</button>
+              <button id="btn-join-room" class="secondary-btn">دخول الغرفة</button>
             </div>
-            <div id="join-status" class="online-status">اكتبي الكود واضغطي دخول للبدء.</div>
+            <div id="join-status" class="online-status">أدخلي الرمز واضغطي دخول للبدء.</div>
           </div>
         </div>
 
         <!-- Player Name Input (Shows under chosen character) -->
         <div class="player-name-box">
-          <label for="input-player-name">اسمك باللعبة (يظهر تحت شخصيتك بخط صغير):</label>
+          <label for="input-player-name">اسم اللاعب (يظهر أسفل شخصيتك):</label>
           <div class="player-name-row">
-            <span class="player-name-icon">🏷️</span>
+            <span class="player-name-icon"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span>
             <input type="text" id="input-player-name" placeholder="اكتبي اسمك (مثال: هيرو، سارة...)" maxlength="12" value="هيرو">
           </div>
         </div>
 
-        <!-- 🎭 Character Selection (Roleplay System) -->
+        <!-- Character Selection (Roleplay System) -->
         <div class="char-select-box">
           <div class="char-select-header">
             <h3>اختاري شخصيتك:</h3>
@@ -261,13 +283,13 @@
         </div>
 
         <div class="menu-action-row">
-          <button id="btn-show-instructions" class="secondary-btn">طريقة اللعب 📖</button>
-          <button id="btn-menu-party-room" class="secondary-btn party-shortcut-btn locked" title="تفتح فقط بعد إكمال جميع المراحل الـ 4!">🔒 غرفة الاحتفال (مقفلة)</button>
-          <button id="btn-play-game" class="main-cta-btn">ابدأي اللعب 🚀</button>
+          <button id="btn-show-instructions" class="secondary-btn">طريقة اللعب</button>
+          <button id="btn-menu-party-room" class="secondary-btn party-shortcut-btn locked" title="تفتح فقط بعد إكمال جميع المراحل الـ 4!">غرفة الاحتفال (مقفلة)</button>
+          <button id="btn-play-game" class="main-cta-btn">بدء اللعب</button>
         </div>
 
         <div class="menu-sub-row">
-          <button id="btn-open-reset-modal" class="text-link-btn" title="تصفير المراحل وإعادة القفل">تصفير تقدم اللعبة 🔒</button>
+          <button id="btn-open-reset-modal" class="text-link-btn" title="تصفير المراحل وإعادة القفل">إعادة ضبط تقدم اللعبة</button>
         </div>
       </div>
     </div>
@@ -275,22 +297,31 @@
     <!-- LEVEL SUCCESS MODAL -->
     <div id="level-win-modal" class="modal-overlay hidden">
       <div class="popup-card win-card">
-        <div class="celebrate-icon">🌟 🪙 🌟</div>
-        <h2 id="win-title">كفو يا هيرو! 🎉</h2>
-        <p id="win-desc">خلصتي كل طلبات المرحلة بنجاح وسرعة!</p>
-        <p id="win-next-notice" class="win-unlock-notice hidden">🔓 تم فتح المرحلة التالية بنجاح!</p>
+        <div class="hero-icon-badge celebrate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M8 21h8m-4-4v4M6 4h12v4a6 6 0 0 1-12 0V4z" stroke="#ffd700" stroke-width="2.2"/>
+            <path d="M6 7H3a2 2 0 0 0-2 2v1a4 4 0 0 1 4 4h1m12-7h3a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h-1" stroke="#ffd700" stroke-width="1.8"/>
+          </svg>
+        </div>
+        <h2 id="win-title">أحسنتِ! تم إنجاز الطلبات</h2>
+        <p id="win-desc">تم تقديم جميع الوجبات بنجاح وإتقان</p>
+        <p id="win-next-notice" class="win-unlock-notice hidden">خلصتي المرحلة! تم فتح المرحلة 2!</p>
         <div class="stats-row">
           <div class="stat-item">
-            <span>الفلوس اللي جمعتيها:</span>
+            <span>العملات المكتسبة:</span>
             <strong id="win-coins">0</strong>
           </div>
           <div class="stat-item">
             <span>التقييم:</span>
-            <strong id="win-stars">⭐⭐⭐</strong>
+            <strong id="win-stars" class="stars-rating">
+              <svg class="ui-icon" viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="#ffd700"/></svg>
+              <svg class="ui-icon" viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="#ffd700"/></svg>
+              <svg class="ui-icon" viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="#ffd700"/></svg>
+            </strong>
           </div>
         </div>
         <div class="popup-buttons">
-          <button id="btn-next-level" class="main-cta-btn">المرحلة اللي بعدها ⏩</button>
+          <button id="btn-next-level" class="main-cta-btn">المرحلة التالية</button>
           <button id="btn-menu-back" class="secondary-btn">القائمة الرئيسية</button>
         </div>
       </div>
@@ -299,11 +330,13 @@
     <!-- LEVEL FAILED MODAL -->
     <div id="level-fail-modal" class="modal-overlay hidden">
       <div class="popup-card fail-card">
-        <div class="fail-icon">⏰ 👻</div>
-        <h2>خلص الوقت!</h2>
-        <p>الطلبات كثرت والوقت خلص قبل ما تكملين الوجبات.. جربي مرة ثانية!</p>
+        <div class="hero-icon-badge fail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h2>انتهى الوقت</h2>
+        <p>انتهى الوقت المحدد قبل إكمال طلبات المرحلة.. يمكنك المحاولة مرة أخرى!</p>
         <div class="popup-buttons">
-          <button id="btn-retry-level" class="main-cta-btn">إعادة المحاولة 🔄</button>
+          <button id="btn-retry-level" class="main-cta-btn">إعادة المحاولة</button>
           <button id="btn-menu-back-fail" class="secondary-btn">القائمة الرئيسية</button>
         </div>
       </div>
@@ -313,17 +346,17 @@
     <div id="birthday-bash-modal" class="modal-overlay hidden">
       <div class="popup-card birthday-grand-card">
         <div class="bday-vortex"></div>
-        <div class="cake-banner">🎂 ✨ 🎈 🥳</div>
-        <h2 class="glow-title">🎉 خلصتوا جميع المراحل! 🎉</h2>
-        <h3 class="gold-subtitle">HAPPY BIRTHDAY HIRO!</h3>
+        <div class="hero-icon-badge bday">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s2-1 4-1 4 1 4 1 2-1 4-1 4 1 4 1"/><path d="M2 21h20"/><path d="M7 8v3m5-3v3m5-3v3M7 5a1 1 0 0 0 0-2 1 1 0 0 0 0 2zm5 0a1 1 0 0 0 0-2 1 1 0 0 0 0 2zm5 0a1 1 0 0 0 0-2 1 1 0 0 0 0 2z"/></svg>
+        </div>
+        <h2 class="glow-title">خلصت كل المراحل!</h2>
         <div class="birthday-text-box">
-          <p id="bday-modal-custom-text">كفو عليكم يا بطلات! أبدعتوا وخلصتوا كل مراحل وطلبات الكافيه بجدارة! 🏆</p>
-          <p>الحين حان وقت الاحتفال الأسطوري! جهزنا لكم غرفة حفلة خاصة بهيرو فيها كيكة وشموع وهدايا ورقص ومفاجآت كيوت! 💚✨</p>
-          <p class="bday-cheer">"يلا نروح نحتفل كلنا سوا! 💃🎂"</p>
+          <p class="bday-main-msg">happy birthday hiro كل عام وانتي بالف خير , استمتعي بيومك واستمتعي باللعبة الي صنعت خصيصا لك</p>
+          <p class="bday-signature">from aseel</p>
         </div>
         <div class="popup-buttons">
-          <button id="btn-enter-party" class="main-cta-btn party-cta-btn">🎂 دخول غرفة الاحتفال والرقص! 💃✨</button>
-          <button id="btn-replay-all" class="secondary-btn">القائمة الرئيسية 📋</button>
+          <button id="btn-enter-party" class="main-cta-btn party-cta-btn">دخول غرفة الاحتفال والرقص</button>
+          <button id="btn-replay-all" class="secondary-btn">القائمة الرئيسية</button>
         </div>
       </div>
     </div>
@@ -332,17 +365,19 @@
     <div id="reset-modal" class="modal-overlay hidden">
       <div class="popup-card reset-card">
         <button id="btn-close-reset-x" class="close-x-btn" title="إغلاق">✕</button>
-        <div class="reset-icon">🔒 ⚠️</div>
+        <div class="hero-icon-badge fail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1.5"/></svg>
+        </div>
         <h2 style="font-size: 1.6rem; margin-bottom: 6px;">إعادة ضبط اللعبة</h2>
-        <p style="font-size: 0.95rem; color: #d0dbe5; margin-bottom: 14px;">لتصفير اللعبة وإعادة قفل جميع المراحل من البداية، يرجى كتابة كلمة المرور:</p>
+        <p style="font-size: 0.95rem; color: #d0dbe5; margin-bottom: 14px;">لإعادة ضبط تقدم اللعبة وقفل المراحل من البداية، يُرجى إدخال كلمة المرور:</p>
         
         <div class="reset-input-row">
           <input type="password" id="input-reset-pass" placeholder="أدخلي كلمة المرور..." maxlength="20">
         </div>
-        <div id="reset-pass-error" class="reset-error hidden">❌ كلمة المرور غير صحيحة!</div>
+        <div id="reset-pass-error" class="reset-error hidden">كلمة المرور غير صحيحة!</div>
 
         <div class="popup-buttons" style="margin-top: 14px;">
-          <button id="btn-confirm-reset" class="main-cta-btn danger-cta">تأكيد التصفير 🔄</button>
+          <button id="btn-confirm-reset" class="main-cta-btn danger-cta">تأكيد إعادة الضبط</button>
           <button id="btn-cancel-reset" class="secondary-btn">إلغاء</button>
         </div>
       </div>
