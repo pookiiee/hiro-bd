@@ -228,24 +228,38 @@ const Net = {
   conn: null,
   myCode: '',
 
-  init() {
+  init(forceNewCode = false) {
     if (typeof Peer === 'undefined') {
       console.warn('PeerJS library not loaded; online multiplayer will run in local simulation.');
       const codeElem = document.getElementById('my-room-code');
       if (codeElem) codeElem.innerText = 'HIRO-LOCAL';
+      updateOnlineLobbyUI();
       return;
     }
 
     try {
-      const randNum = Math.floor(100 + Math.random() * 900);
+      if (this.peer && !this.peer.destroyed) {
+        try { this.peer.destroy(); } catch (e) {}
+      }
+
+      const randNum = forceNewCode ? Math.floor(1000 + Math.random() * 9000) : Math.floor(100 + Math.random() * 900);
       this.myCode = `HIRO-${randNum}`;
       const peerId = `ghost-cafe-${this.myCode.toLowerCase()}`;
 
-      this.peer = new Peer(peerId);
+      this.peer = new Peer(peerId, {
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' }
+          ]
+        }
+      });
 
       this.peer.on('open', (id) => {
         const codeElem = document.getElementById('my-room-code');
         if (codeElem) codeElem.innerText = this.myCode;
+        updateOnlineLobbyUI();
       });
 
       this.peer.on('connection', (c) => {
@@ -258,6 +272,9 @@ const Net = {
 
       this.peer.on('error', (err) => {
         console.warn('PeerJS status:', err);
+        if (err && (err.type === 'unavailable-id' || err.type === 'server-error')) {
+          setTimeout(() => this.init(true), 400);
+        }
       });
     } catch (e) {
       console.warn('Network peer exception:', e);
@@ -266,33 +283,54 @@ const Net = {
 
   connectTo(targetCode) {
     if (!this.peer) {
-      alert('خدمة الأونلاين غير متاحة حالياً بدون اتصال إنترنت.');
+      showNotice('خدمة الأونلاين غير متاحة حالياً بدون اتصال إنترنت.');
       return;
     }
-    const cleanCode = targetCode.trim().toUpperCase();
-    const targetPeerId = `ghost-cafe-${cleanCode.toLowerCase()}`;
+    let raw = (targetCode || '').trim().toUpperCase();
+    if (!raw) {
+      showNotice('يرجى كتابة رمز الغرفة أولاً للانضمام.');
+      return;
+    }
+    // Normalize code so user can type: "489", "hiro-489", "HIRO-489", "HIRO489"
+    if (!raw.startsWith('HIRO-')) {
+      const stripped = raw.replace(/^HIRO/i, '').replace(/^-/, '');
+      raw = 'HIRO-' + (stripped || raw);
+    }
+    const targetPeerId = `ghost-cafe-${raw.toLowerCase()}`;
     const statusElem = document.getElementById('join-status');
-    statusElem.innerText = 'جاري الانضمام إلى الغرفة...';
+    if (statusElem) statusElem.innerText = `جاري الاتصال بالغرفة (${raw})...`;
 
     try {
-      this.conn = this.peer.connect(targetPeerId);
+      if (this.conn && this.conn.open) {
+        try { this.conn.close(); } catch(e) {}
+      }
+
+      this.conn = this.peer.connect(targetPeerId, { reliable: true });
       state.isHost = false;
       state.p2.name = state.localPlayerName;
       if (state.selectedCharId) state.p2.charId = state.selectedCharId;
 
       this.conn.on('open', () => {
-        statusElem.innerText = 'تم الانضمام بنجاح! مرحباً بكِ في المقهى!';
+        if (statusElem) statusElem.innerText = `تم الانضمام بنجاح إلى الغرفة (${raw})!`;
+        state.onlineConnected = true;
         state.isHost = false;
         state.p2.name = state.localPlayerName;
         if (state.selectedCharId) state.p2.charId = state.selectedCharId;
+        
+        const lobbyCodeVal = document.getElementById('lobby-code-val');
+        if (lobbyCodeVal) lobbyCodeVal.innerText = raw;
+        
+        sounds.playCelebrationFanfare();
+        showNotice(`تم الانضمام بنجاح للغرفة (${raw})! بانتظار المضيفة لبدء اللعبة`);
         this.setupConnection();
       });
 
       this.conn.on('error', (err) => {
-        statusElem.innerText = 'تعذر الاتصال! تأكدي من كود الروم.';
+        if (statusElem) statusElem.innerText = 'تعذر الاتصال! تأكدي من صحة رمز الغرفة وأن المضيفة متصلة.';
+        showNotice('تعذر الاتصال بالغرفة! تأكدي من صحة الرمز.');
       });
     } catch (e) {
-      statusElem.innerText = 'حدث خطأ في الاتصال، حاولي ثانية.';
+      if (statusElem) statusElem.innerText = 'حدث خطأ في الاتصال، حاولي ثانية.';
     }
   },
 
@@ -308,36 +346,61 @@ const Net = {
     }
 
     const hostStatus = document.getElementById('host-status');
-    if (hostStatus) hostStatus.innerText = 'انضمت الصديقة للغرفة! أنتما جاهزتان للبدء';
+    if (hostStatus) {
+      hostStatus.innerText = state.isHost ? 'انضمت الصديقة للغرفة! أنتما جاهزتان للبدء' : 'أنتِ متصلة بالغرفة!';
+    }
+
+    updateOnlineLobbyUI();
 
     this.conn.on('data', (data) => {
       this.handleIncomingData(data);
     });
 
-    // Send custom player name and character immediately upon connection
+    // Exchange player identities and current game scene immediately
     const sendIntro = () => {
       const myLocalP = (state.mode === 'online' && !state.isHost) ? state.p2 : state.p1;
       myLocalP.name = state.localPlayerName;
       this.send({
         type: 'PLAYER_INTRO',
         name: state.localPlayerName,
-        charId: myLocalP.charId
+        charId: myLocalP.charId,
+        isHost: state.isHost,
+        scene: state.scene,
+        levelRunning: state.levelRunning,
+        currentLevelIndex: state.currentLevelIndex
       });
     };
     sendIntro();
-    setTimeout(sendIntro, 350);
-    setTimeout(sendIntro, 1000);
+    setTimeout(sendIntro, 250);
+    setTimeout(sendIntro, 800);
+
+    // If host is ALREADY playing when guest connects, auto-launch guest directly!
+    if (state.isHost && state.levelRunning) {
+      setTimeout(() => {
+        if (state.scene === 'party') {
+          this.send({ type: 'ENTER_PARTY_ROOM' });
+        } else {
+          this.send({ type: 'START_LEVEL', levelIndex: state.currentLevelIndex });
+        }
+      }, 400);
+    }
 
     this.conn.on('close', () => {
       state.onlineConnected = false;
       const netBadge = document.getElementById('net-status-badge');
       if (netBadge) netBadge.innerText = 'انقطع الاتصال';
+      showNotice('انقطع الاتصال مع اللاعب الآخر.');
+      updateOnlineLobbyUI();
     });
   },
 
   send(data) {
     if (this.conn && this.conn.open) {
-      this.conn.send(data);
+      try {
+        this.conn.send(data);
+      } catch (e) {
+        console.warn('Network send error:', e);
+      }
     }
   },
 
@@ -353,23 +416,50 @@ const Net = {
       if (data.charId) targetP.charId = data.charId;
       if (data.name) targetP.name = data.name;
       if (typeof data.dancing !== 'undefined') targetP.dancing = data.dancing;
-    } else if (data.type === 'PLAYER_INTRO' || data.type === 'NAME_CHANGE') {
-      const targetP = state.isHost ? state.p2 : state.p1;
-      if (data.name) targetP.name = data.name;
-      if (data.charId) targetP.charId = data.charId;
+    } else if (data.type === 'PLAYER_INTRO') {
+      if (state.isHost) {
+        state.p2.name = data.name || 'الصديقة';
+        if (data.charId) state.p2.charId = data.charId;
+      } else {
+        state.p1.name = data.name || 'هيرو';
+        if (data.charId) state.p1.charId = data.charId;
+        // If guest connects while host is ALREADY playing, enter directly!
+        if (data.levelRunning) {
+          if (data.scene === 'party') {
+            state.partyUnlocked = true;
+            enterPartyRoom(false);
+          } else {
+            startLevel(data.currentLevelIndex || 0, false);
+          }
+        }
+      }
+      updateOnlineLobbyUI();
+
       if (!data.isReply) {
         const myLocalP = (state.mode === 'online' && !state.isHost) ? state.p2 : state.p1;
         this.send({
           type: 'PLAYER_INTRO',
           name: state.localPlayerName,
           charId: myLocalP.charId,
+          isHost: state.isHost,
+          scene: state.scene,
+          levelRunning: state.levelRunning,
+          currentLevelIndex: state.currentLevelIndex,
           isReply: true
         });
       }
+    } else if (data.type === 'NAME_CHANGE') {
+      if (state.isHost) {
+        state.p2.name = data.name || 'الصديقة';
+      } else {
+        state.p1.name = data.name || 'هيرو';
+      }
+      updateOnlineLobbyUI();
     } else if (data.type === 'CHAR_CHANGE') {
       const targetP = state.isHost ? state.p2 : state.p1;
       if (data.charId) targetP.charId = data.charId;
       if (data.name) targetP.name = data.name;
+      updateOnlineLobbyUI();
     } else if (data.type === 'ACTION') {
       const remotePlayer = state.isHost ? state.p2 : state.p1;
       handlePlayerAction(remotePlayer);
@@ -387,8 +477,12 @@ const Net = {
 
       updateHUD();
     } else if (data.type === 'START_LEVEL') {
+      // Guest automatically enters level directly together with the host!
+      document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
       startLevel(data.levelIndex, false);
     } else if (data.type === 'ENTER_PARTY_ROOM') {
+      // Guest automatically enters party room directly together with the host!
+      document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
       state.partyUnlocked = true;
       localStorage.setItem('hiro_party_unlocked', 'true');
       updatePartyMenuButton();
@@ -409,21 +503,107 @@ const Net = {
         g.opened = true;
         sounds.playMeow(g.pitch);
         sounds.playBoxPop();
-        spawnSparks(g.x, g.y, 25, g.color);
+        triggerPartyConfetti(g.x, g.y, false);
         spawnFloatingText('مياو!', g.x, g.y - 45, g.color);
       }
-    } else if (data.type === 'PARTY_DANCE') {
-      const targetP = state.isHost ? state.p2 : state.p1;
-      targetP.dancing = data.dancing;
+    } else if (data.type === 'PARTY_CONFETTI') {
+      triggerPartyConfetti(data.x, data.y, true);
     } else if (data.type === 'PARTY_LIGHTS') {
       partyState.partyLights = data.lights;
       sounds.playInteract();
       spawnFloatingText(data.lights ? 'الإضاءة ساطعة!' : 'إضاءة هادئة', 840, 390, '#00e5ff');
-    } else if (data.type === 'PARTY_CONFETTI') {
-      triggerPartyConfetti(data.x, data.y, false);
+    } else if (data.type === 'PARTY_DANCE') {
+      const remoteP = state.isHost ? state.p2 : state.p1;
+      remoteP.dancing = data.dancing;
     }
   }
 };
+
+// Real-time Online Room Lobby UI & Permissions Updater
+function updateOnlineLobbyUI() {
+  const codeVal = document.getElementById('lobby-code-val');
+  if (codeVal) {
+    codeVal.innerText = Net.myCode || '---';
+  }
+
+  const countBadge = document.getElementById('lobby-members-count-badge');
+  const pill2 = document.getElementById('lobby-pill-p2');
+  const name1 = document.getElementById('lobby-name-p1');
+  const status1 = document.getElementById('lobby-status-p1');
+  const name2 = document.getElementById('lobby-name-p2');
+  const status2 = document.getElementById('lobby-status-p2');
+  const banner = document.getElementById('lobby-instruction-banner');
+  const btnPlay = document.getElementById('btn-play-game');
+
+  const hostDisplayName = state.p1.name || 'هيرو';
+  const guestDisplayName = state.p2.name || 'الصديقة';
+
+  if (name1) name1.innerText = hostDisplayName;
+  if (status1) status1.innerText = state.isHost ? 'أنتِ (المضيفة)' : 'المضيفة (جاهزة)';
+
+  if (state.onlineConnected) {
+    if (countBadge) {
+      countBadge.innerText = 'اللاعبون: (2/2)';
+      countBadge.classList.add('connected');
+    }
+    if (pill2) pill2.classList.add('connected');
+    if (name2) name2.innerText = guestDisplayName;
+    if (status2) {
+      status2.innerText = state.isHost ? 'متصلة وجاهزة' : 'أنتِ (متصلة)';
+      status2.className = 'pill-status ready';
+    }
+    if (banner) {
+      if (state.isHost) {
+        banner.innerText = `انضمت ${guestDisplayName}! أنتِ مضيفة الغرفة، اضغطي (بدء اللعب) للانطلاق معاً!`;
+        banner.className = 'lobby-instruction ready-to-play';
+      } else {
+        banner.innerText = `أنتِ متصلة بغرفة ${hostDisplayName}! بانتظار المضيفة لبدء اللعبة...`;
+        banner.className = 'lobby-instruction guest-waiting';
+      }
+    }
+  } else {
+    if (countBadge) {
+      countBadge.innerText = 'اللاعبون: (1/2)';
+      countBadge.classList.remove('connected');
+    }
+    if (pill2) pill2.classList.remove('connected');
+    if (name2) name2.innerText = 'بانتظار الصديقة...';
+    if (status2) {
+      status2.innerText = 'غير متصلة';
+      status2.className = 'pill-status waiting';
+    }
+    if (banner) {
+      if (state.isHost) {
+        banner.innerText = 'شاركي رمز الغرفة مع صديقتك لتنضم إليكِ';
+      } else {
+        banner.innerText = 'أدخلي رمز الغرفة للمشاركة مع صديقتك';
+      }
+      banner.className = 'lobby-instruction';
+    }
+  }
+
+  // Permissions on Start Button: Guest CANNOT start, only Host can start!
+  if (btnPlay) {
+    if (state.mode === 'online' && !state.isHost) {
+      btnPlay.classList.add('guest-waiting-btn');
+      btnPlay.innerText = 'بانتظار المضيفة لبدء اللعبة...';
+      btnPlay.title = 'فقط مضيفة الغرفة يمكنها بدء اللعبة';
+    } else if (state.mode === 'online' && state.isHost) {
+      btnPlay.classList.remove('guest-waiting-btn');
+      if (state.onlineConnected) {
+        btnPlay.innerText = `بدء اللعب مع ${guestDisplayName}!`;
+        btnPlay.title = 'انطلاق اللعبة لكليكما معاً';
+      } else {
+        btnPlay.innerText = 'بدء اللعب';
+        btnPlay.title = 'بدء اللعب';
+      }
+    } else {
+      btnPlay.classList.remove('guest-waiting-btn');
+      btnPlay.innerText = 'بدء اللعب';
+      btnPlay.title = 'بدء اللعب';
+    }
+  }
+}
 
 // Input Handling
 const keys = {};
@@ -1013,6 +1193,7 @@ function endLevel(won) {
       unlockedNew = true;
     }
     renderLevelCards();
+  updateOnlineLobbyUI();
 
     // Finished all levels (Level 4 completed)!
     if (state.currentLevelIndex === 3) {
@@ -1374,6 +1555,11 @@ function renderLevelCards() {
     `;
 
     card.addEventListener('click', () => {
+      if (state.mode === 'online' && !state.isHost) {
+        sounds.playBoxPop();
+        showNotice(`مضيفة الغرفة (${state.p1.name || 'هيرو'}) هي من تختار المرحلة!`);
+        return;
+      }
       if (!isUnlocked) {
         sounds.playBoxPop();
         card.classList.add('shake-anim');
@@ -1413,6 +1599,7 @@ function setupUI() {
         state.p1.name = val;
       }
 
+      updateOnlineLobbyUI();
       if (state.mode === 'online' && Net.conn) {
         Net.send({ type: 'NAME_CHANGE', name: val });
       }
@@ -1469,6 +1656,7 @@ function setupUI() {
       } else {
         onlinePanel.classList.add('hidden');
       }
+      updateOnlineLobbyUI();
     });
   });
 
@@ -1483,6 +1671,8 @@ function setupUI() {
     tabJoin.classList.remove('active');
     hostView.classList.remove('hidden');
     joinView.classList.add('hidden');
+    state.isHost = true;
+    updateOnlineLobbyUI();
   });
 
   tabJoin.addEventListener('click', () => {
@@ -1490,6 +1680,8 @@ function setupUI() {
     tabHost.classList.remove('active');
     joinView.classList.remove('hidden');
     hostView.classList.add('hidden');
+    state.isHost = false;
+    updateOnlineLobbyUI();
   });
 
   // Copy Room Code Button
@@ -1500,13 +1692,23 @@ function setupUI() {
     setTimeout(() => { btn.innerText = 'نسخ الرمز'; }, 2000);
   });
 
-  // Join Room by Code Button
-  document.getElementById('btn-join-room').addEventListener('click', () => {
-    const code = document.getElementById('input-room-code').value;
+  // Join Room by Code Button & Enter Key
+  const handleJoinAction = () => {
+    const codeInput = document.getElementById('input-room-code');
+    const code = codeInput ? codeInput.value : '';
     if (code) {
       Net.connectTo(code);
+    } else {
+      showNotice('يرجى إدخال رمز الغرفة أولاً');
     }
-  });
+  };
+  document.getElementById('btn-join-room').addEventListener('click', handleJoinAction);
+  const inputCodeElem = document.getElementById('input-room-code');
+  if (inputCodeElem) {
+    inputCodeElem.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleJoinAction();
+    });
+  }
 
   // Tutorial / Instructions Modal Triggers
   const tutorialModal = document.getElementById('tutorial-modal');
@@ -1524,9 +1726,14 @@ function setupUI() {
   document.getElementById('btn-close-tutorial').addEventListener('click', closeTutorial);
   document.getElementById('btn-close-tut-x').addEventListener('click', closeTutorial);
 
-  // Play button on menu
+  // Play button on menu (Enforce: only Host can start in online mode!)
   document.getElementById('btn-play-game').addEventListener('click', () => {
-    startLevel(state.currentLevelIndex);
+    if (state.mode === 'online' && !state.isHost) {
+      sounds.playBoxPop();
+      showNotice(`فقط مضيفة الغرفة (${state.p1.name || 'هيرو'}) يمكنها بدء اللعبة، بانتظار انطلاق اللعبة!`);
+      return;
+    }
+    startLevel(state.currentLevelIndex, true);
   });
 
   // Next level button
@@ -1571,6 +1778,11 @@ function setupUI() {
   const btnMenuParty = document.getElementById('btn-menu-party-room');
   if (btnMenuParty) {
     btnMenuParty.addEventListener('click', () => {
+      if (state.mode === 'online' && !state.isHost) {
+        sounds.playBoxPop();
+        showNotice(`فقط مضيفة الغرفة (${state.p1.name || 'هيرو'}) يمكنها الانتقال لقاعة الاحتفال!`);
+        return;
+      }
       enterPartyRoom(true);
     });
   }

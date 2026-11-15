@@ -243,17 +243,54 @@
               <span id="my-room-code" class="room-code-text">جاري التجهيز...</span>
               <button id="btn-copy-code" class="copy-btn">نسخ الرمز</button>
             </div>
-            <div id="host-status" class="online-status">بانتظار انضمام اللاعب الآخر...</div>
+            <div id="host-status" class="online-status">بانتظار انضمام الصديقة...</div>
           </div>
 
           <!-- Join View -->
           <div id="join-view" class="online-subview hidden">
             <p>أدخلي رمز الغرفة للمشاركة:</p>
             <div class="code-input-row">
-              <input type="text" id="input-room-code" placeholder="مثال: HIRO-489" maxlength="15">
+              <input type="text" id="input-room-code" placeholder="مثال: HIRO-489 أو 489" maxlength="15">
               <button id="btn-join-room" class="secondary-btn">دخول الغرفة</button>
             </div>
             <div id="join-status" class="online-status">أدخلي الرمز واضغطي دخول للبدء.</div>
+          </div>
+
+          <!-- Live Room Lobby Card (Shows player count and member names) -->
+          <div id="room-lobby-card" class="room-lobby-card">
+            <div class="lobby-header">
+              <div class="lobby-room-code-tag">
+                <span class="label">رمز الغرفة:</span>
+                <span id="lobby-code-val" class="code-val">---</span>
+              </div>
+              <div id="lobby-members-count-badge" class="lobby-count-badge">
+                اللاعبون: (1/2)
+              </div>
+            </div>
+
+            <div class="lobby-players-grid">
+              <!-- Player 1 Slot (Host) -->
+              <div class="lobby-player-pill host-pill">
+                <div class="pill-info">
+                  <span class="pill-role">مضيفة الغرفة (اللاعب 1)</span>
+                  <strong class="pill-name" id="lobby-name-p1">هيرو</strong>
+                </div>
+                <span class="pill-status ready" id="lobby-status-p1">جاهزة</span>
+              </div>
+
+              <!-- Player 2 Slot (Guest) -->
+              <div class="lobby-player-pill guest-pill" id="lobby-pill-p2">
+                <div class="pill-info">
+                  <span class="pill-role">الضيفة المنضمة (اللاعب 2)</span>
+                  <strong class="pill-name" id="lobby-name-p2">بانتظار الصديقة...</strong>
+                </div>
+                <span class="pill-status waiting" id="lobby-status-p2">غير متصلة</span>
+              </div>
+            </div>
+
+            <div id="lobby-instruction-banner" class="lobby-instruction">
+              شاركي رمز الغرفة مع صديقتك لتنضم إليكِ
+            </div>
           </div>
         </div>
 
